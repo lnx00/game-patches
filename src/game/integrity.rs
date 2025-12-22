@@ -27,7 +27,7 @@ type CreateThreadFn = unsafe extern "system" fn(
     lp_thread_id: *mut u32,
 ) -> HANDLE;
 
-const INTEGRITY_THREAD_START_ADDRESS: usize = 0x1422F7260;
+const INTEGRITY_THREAD_START_ADDRESS: usize = 0x1422F62C0;
 
 static INTEGRITY_CHECKS_DISABLED: AtomicBool = AtomicBool::new(false);
 

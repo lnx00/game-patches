@@ -27,7 +27,7 @@ type CreateThreadFn = unsafe extern "system" fn(
     lp_thread_id: *mut u32,
 ) -> HANDLE;
 
-const INTEGRITY_THREAD_START_ADDRESS: usize = 0x1422F62C0;
+const INTEGRITY_THREAD_START_ADDRESSES: &[usize] = &[0x1422F62C0, 0x1422F7260];
 
 static INTEGRITY_CHECKS_DISABLED: AtomicBool = AtomicBool::new(false);
 
@@ -59,7 +59,7 @@ fn check_thread(thread_id: u32) -> Result<bool, String> {
             ));
         }
 
-        if thread_start_address == INTEGRITY_THREAD_START_ADDRESS {
+        if INTEGRITY_THREAD_START_ADDRESSES.contains(&thread_start_address) {
             TerminateThread(thread_handle, 0x0).map_err(|_| "failed to terminate thread")?;
             return Ok(true);
         }
@@ -161,7 +161,7 @@ impl IntegrityHook {
     ) -> HANDLE {
         let mut lp_start_address = lp_start_address;
 
-        if lp_start_address as usize == INTEGRITY_THREAD_START_ADDRESS {
+        if INTEGRITY_THREAD_START_ADDRESSES.contains(&(lp_start_address as usize)) {
             lp_start_address = Self::empty_thread as *mut c_void;
             println!("CreateThread: prevented integrity check thread creation");
         }

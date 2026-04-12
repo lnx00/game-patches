@@ -5,20 +5,19 @@ use crate::utils;
 use super::Patch;
 
 /*
-    The game already has logic for disabling camera smoothing, but it is usually not possible
-    to enable it. We can patch the condition that checks if mouse smoothing is disabled to
-    always run, which causes the game to use the mouse movement directly instead of lerping it.
+    The game loads a smoothing value of 0.05 by default. We can disable
+    smoothing by setting the register holding this value (xmm4) to zero.
 */
 
 pub struct DisableCameraSmoothing {
     target_address: usize,
-    original_bytes: Box<[u8; 2]>,
+    original_bytes: Box<[u8; 12]>,
 }
 
 static INSTANCE: LazyLock<Mutex<DisableCameraSmoothing>> = LazyLock::new(|| {
-    let game_module = libmem::find_module("ACU.exe").unwrap();
+    let game_module = libmem::find_module("ShadowOfMordor.exe").unwrap();
     let target_address = unsafe {
-        libmem::sig_scan("74 ? 41 8B 06 41 89 85", game_module.base, game_module.size)
+        libmem::sig_scan("84 C0 75 ? F3 0F 10 25", game_module.base, game_module.size)
             .ok_or("signature not found")
             .unwrap()
     };
@@ -37,7 +36,10 @@ impl Patch for DisableCameraSmoothing {
     }
 
     fn apply(&mut self) -> Result<(), String> {
-        let patch_bytes: [u8; 2] = [0x90, 0x90];
+        let patch_bytes: [u8; 10] = [
+            0x66, 0x0F, 0xEF, 0xE4, // pxor xmm4, xmm4
+            0x90, 0x90, 0x90, 0x90, 0x90, 0x90 // nop
+        ];
         utils::patch_bytes(self.target_address, &patch_bytes)?;
 
         Ok(())

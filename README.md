@@ -1,6 +1,6 @@
 # ME: SoM Patches
 
-Quality-of-life patches for the game "Middle Earth: Shadow of Mordor".
+Quality-of-life patches for the game "Middle-earth: Shadow of Mordor".
 
 ## Features
 

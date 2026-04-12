@@ -42,11 +42,16 @@ fn run() -> Result<(), String> {
 }
 
 fn main_thread(dll_module: SendWrapper<HINSTANCE>) {
-    let config = Config::read("./plugins/acu_patches.toml").unwrap_or_default();
+    let config = Config::read("/x64/plugins/mesom_patches.toml").unwrap_or_default();
 
     // Attach console window
     if config.show_console {
-        let title = format!("{} {} by {}", PKG_NAME.unwrap_or("Mod"), PKG_VERSION.unwrap_or("?.?.?"), PKG_NAME.unwrap_or("Unknown"));
+        let title = format!(
+            "{} {} by {}",
+            PKG_NAME.unwrap_or("package"),
+            PKG_VERSION.unwrap_or("?.?.?"),
+            PKG_AUTHORS.unwrap_or("unknown")
+        );
         platform::attach_console(&title);
     }
 

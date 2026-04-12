@@ -19,7 +19,7 @@ impl Config {
 impl Default for Config {
     fn default() -> Self {
         Self {
-            show_console: false,
+            show_console: true,
         }
     }
 }

@@ -1,4 +1,4 @@
-# ME: SoM Patches
+# MESOM Patches
 
 Quality-of-life patches for the game "Middle-earth: Shadow of Mordor".
 
@@ -11,7 +11,7 @@ Quality-of-life patches for the game "Middle-earth: Shadow of Mordor".
 ## Installation
 
 1. Download and extract the latest mod files (`mesom-patches-aio.zip`).
-2. Copy **all** extracted files and folders (`winmm.dll`, `plugins/...`) to your game folder (`ShadowOfMordor/x64/`).
+2. Copy **all** extracted files and folders (`winmm.dll`, `plugins/...`) to your game binary folder (`ShadowOfMordor/x64/`).
 3. Run the game and enjoy!
 
 The mod files contain an ASI loader that will automatically load the mod DLL when launching the game. If the `winmm.dll` file conflicts
@@ -19,7 +19,7 @@ with any other mod, you can choose an alternative DLL [here](https://github.com/
 
 ## Uninstallation
 
-1. Navigate to your game folder (`ShadowOfMordor/x64/`).
+1. Navigate to your game binary folder (`ShadowOfMordor/x64/`).
 2. Delete the `winmm.dll` file and the `plugins` folder (or just the specific `mesom_patches` files inside it if you have other plugins).
 
 ## Configuration

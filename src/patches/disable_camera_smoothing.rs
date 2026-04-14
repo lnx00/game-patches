@@ -35,6 +35,10 @@ impl Patch for DisableCameraSmoothing {
         INSTANCE.lock().unwrap()
     }
 
+    fn name() -> &'static str {
+        "disable_camera_smoothing"
+    }
+
     fn apply(&mut self) -> Result<(), String> {
         let patch_bytes: [u8; 10] = [
             0x66, 0x0F, 0xEF, 0xE4, // pxor xmm4, xmm4

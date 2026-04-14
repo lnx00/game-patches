@@ -1,4 +1,3 @@
-use config::Config;
 use std::thread;
 use windows::Win32::{
     Foundation::{HINSTANCE, HMODULE},
@@ -7,6 +6,8 @@ use windows::Win32::{
         SystemServices::{DLL_PROCESS_ATTACH, DLL_PROCESS_DETACH},
     },
 };
+
+use crate::config::CONFIG;
 
 mod config;
 mod game;
@@ -23,29 +24,30 @@ const PKG_AUTHORS: Option<&str> = option_env!("CARGO_PKG_AUTHORS");
 
 const VK_F11: i32 = 0x7A;
 
-fn run() -> Result<(), String> {
+fn run(wait_for_unload: bool) -> Result<(), String> {
     println!("Waiting for the game...");
     game::wait_for_game();
 
     println!("Game ready! Applying patches...");
     patches::run_all_patches()?;
 
-    println!("All patches applied successfully! Press F11 to unload.");
-    while !platform::is_button_down(VK_F11) {
-        thread::sleep(std::time::Duration::from_millis(100));
-    }
+    println!("All patches applied successfully!");
+    if wait_for_unload {
+        println!("Press F11 to unload.");
+        while !platform::is_button_down(VK_F11) {
+            thread::sleep(std::time::Duration::from_millis(100));
+        }
 
-    println!("Unloading patches...");
-    patches::disable_all_patches()?;
+        println!("Unloading patches...");
+        patches::disable_all_patches()?;
+    }
 
     Ok(())
 }
 
 fn main_thread(dll_module: SendWrapper<HINSTANCE>) {
-    let config = Config::read("/x64/plugins/mesom_patches.toml").unwrap_or_default();
-
     // Attach console window
-    if config.show_console {
+    if CONFIG.show_console {
         let title = format!(
             "{} {} by {}",
             PKG_NAME.unwrap_or("package"),
@@ -56,13 +58,13 @@ fn main_thread(dll_module: SendWrapper<HINSTANCE>) {
     }
 
     // Run main logic
-    if let Err(e) = run() {
+    if let Err(e) = run(CONFIG.show_console) {
         eprintln!("Error: {}", e);
         platform::msg_box(&e, "Error", platform::MsgBoxType::Error);
     }
 
     // Detach console
-    if config.show_console {
+    if CONFIG.show_console {
         platform::detach_console();
     }
 

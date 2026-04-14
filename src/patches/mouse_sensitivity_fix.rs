@@ -61,6 +61,10 @@ impl Patch for MouseSensitivityFix {
         INSTANCE.lock().unwrap()
     }
 
+    fn name() -> &'static str {
+        "mouse_sensitivity_fix"
+    }
+
     fn apply(&mut self) -> Result<(), String> {
         let patch_bytes_1: [u8; 5] = [0xF3, 0x41, 0x0F, 0x59, 0xCA]; // mulss xmm1, xmm10
         let patch_bytes_2: [u8; 5] = [0xF3, 0x41, 0x0F, 0x59, 0xD2]; // mulss xmm2, xmm10

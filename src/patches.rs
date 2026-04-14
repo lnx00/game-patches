@@ -12,7 +12,10 @@ pub mod uniform_camera_speed;
 
 pub trait Patch {
     fn inst() -> MutexGuard<'static, Self>;
-    fn name() -> &'static str;
+    fn config_key() -> &'static str;
+    fn default_enabled() -> bool {
+        true
+    }
 
     fn apply(&mut self) -> Result<(), String>;
     fn revert(&mut self) -> Result<(), String>;
@@ -28,22 +31,23 @@ macro_rules! patch_types {
 
 macro_rules! apply_patch {
     ($patch_ty:ty) => {{
-        let name = <$patch_ty as Patch>::name();
-        if CONFIG.patch_enabled(name, true) {
+        let config_key = <$patch_ty as Patch>::config_key();
+        let default_enabled = <$patch_ty as Patch>::default_enabled();
+        if CONFIG.patch_enabled(config_key, default_enabled) {
             <$patch_ty as Patch>::inst().apply()?;
-            println!("- {} applied", name);
+            println!("- {} applied", config_key);
         } else {
-            println!("- {} skipped (disabled)", name);
+            println!("- {} skipped (disabled)", config_key);
         }
     }};
 }
 
 macro_rules! revert_patch {
     ($patch_ty:ty) => {{
-        let name = <$patch_ty as Patch>::name();
-        if CONFIG.patch_enabled(name, true) {
+        let config_key = <$patch_ty as Patch>::config_key();
+        if CONFIG.patch_enabled(config_key, true) {
             <$patch_ty as Patch>::inst().revert()?;
-            println!("- {} reverted", name);
+            println!("- {} reverted", config_key);
         }
     }};
 }

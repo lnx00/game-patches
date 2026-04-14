@@ -8,6 +8,7 @@ pub static CONFIG: LazyLock<Config> =
 #[derive(Deserialize)]
 pub struct Config {
     pub show_console: bool,
+    pub allow_unloading: bool,
     pub patches: HashMap<String, bool>,
 }
 
@@ -28,6 +29,7 @@ impl Default for Config {
     fn default() -> Self {
         Self {
             show_console: false,
+            allow_unloading: false,
             patches: HashMap::new(),
         }
     }

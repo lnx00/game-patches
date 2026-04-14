@@ -61,7 +61,7 @@ impl Patch for MouseSensitivityFix {
         INSTANCE.lock().unwrap()
     }
 
-    fn name() -> &'static str {
+    fn config_key() -> &'static str {
         "mouse_sensitivity_fix"
     }
 

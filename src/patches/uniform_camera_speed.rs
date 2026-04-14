@@ -35,7 +35,7 @@ impl Patch for UniformCameraSpeed {
         INSTANCE.lock().unwrap()
     }
 
-    fn name() -> &'static str {
+    fn config_key() -> &'static str {
         "uniform_camera_speed"
     }
 

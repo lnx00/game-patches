@@ -24,7 +24,7 @@ const PKG_AUTHORS: Option<&str> = option_env!("CARGO_PKG_AUTHORS");
 
 const VK_F11: i32 = 0x7A;
 
-fn run(wait_for_unload: bool) -> Result<(), String> {
+fn run(allow_unloading: bool) -> Result<(), String> {
     println!("Waiting for the game...");
     game::wait_for_game();
 
@@ -32,7 +32,7 @@ fn run(wait_for_unload: bool) -> Result<(), String> {
     patches::run_all_patches()?;
 
     println!("All patches applied successfully!");
-    if wait_for_unload {
+    if allow_unloading {
         println!("Press F11 to unload.");
         while !platform::is_button_down(VK_F11) {
             thread::sleep(std::time::Duration::from_millis(100));
@@ -40,6 +40,10 @@ fn run(wait_for_unload: bool) -> Result<(), String> {
 
         println!("Unloading patches...");
         patches::disable_all_patches()?;
+    } else {
+        loop {
+            thread::park();
+        }
     }
 
     Ok(())
@@ -58,7 +62,7 @@ fn main_thread(dll_module: SendWrapper<HINSTANCE>) {
     }
 
     // Run main logic
-    if let Err(e) = run(CONFIG.show_console) {
+    if let Err(e) = run(CONFIG.allow_unloading) {
         eprintln!("Error: {}", e);
         platform::msg_box(&e, "Error", platform::MsgBoxType::Error);
     }

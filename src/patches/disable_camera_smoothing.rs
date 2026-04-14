@@ -35,7 +35,7 @@ impl Patch for DisableCameraSmoothing {
         INSTANCE.lock().unwrap()
     }
 
-    fn name() -> &'static str {
+    fn config_key() -> &'static str {
         "disable_camera_smoothing"
     }
 

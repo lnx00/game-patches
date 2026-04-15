@@ -1,6 +1,6 @@
 [package]
 name = "mesom-patches"
-version = "0.0.1"
+version = "0.1.0"
 authors = ["lnx00"]
 edition = "2024"
 
@@ -8,10 +8,10 @@ edition = "2024"
 crate-type = ["cdylib"]
 
 [dependencies]
-toml = "0.8"
+toml = "1"
 serde = { version = "1.0", features = ["derive"] }
 libmem = "5"
-windows = { version = "0.61", features = [
+windows = { version = "0.62", features = [
     "Win32_Foundation",
     "Win32_Security",
     "Win32_System_Threading",

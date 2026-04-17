@@ -1,8 +1,4 @@
-use std::sync::{LazyLock, Mutex, MutexGuard};
-
-use crate::utils;
-
-use super::Patch;
+use crate::{framework::patch::Patch, utils};
 
 /*
     (Experimental)
@@ -23,46 +19,9 @@ pub struct MouseSensitivityFix {
     original_bytes_2: Box<[u8; 5]>,
 }
 
-static INSTANCE: LazyLock<Mutex<MouseSensitivityFix>> = LazyLock::new(|| {
-    let game_module = libmem::find_module("ShadowOfMordor.exe").unwrap();
-
-    let target_address_1 = unsafe {
-        libmem::sig_scan(
-            "F3 41 0F 59 CD F3 0F 58 C1 F3 0F 11 45",
-            game_module.base,
-            game_module.size,
-        )
-        .ok_or("signature not found")
-        .unwrap()
-    };
-    let target_address_2 = unsafe {
-        libmem::sig_scan(
-            "F3 41 0F 59 D5 F3 44 0F 11 5D",
-            game_module.base,
-            game_module.size,
-        )
-        .ok_or("signature not found")
-        .unwrap()
-    };
-
-    let original_bytes_1 = unsafe { libmem::read_memory::<_>(target_address_1) };
-    let original_bytes_2 = unsafe { libmem::read_memory::<_>(target_address_2) };
-
-    Mutex::new(MouseSensitivityFix {
-        target_address_1,
-        target_address_2,
-        original_bytes_1: Box::new(original_bytes_1),
-        original_bytes_2: Box::new(original_bytes_2),
-    })
-});
-
 impl Patch for MouseSensitivityFix {
-    fn inst() -> MutexGuard<'static, Self> {
-        INSTANCE.lock().unwrap()
-    }
-
-    fn config_key() -> &'static str {
-        "mouse_sensitivity_fix"
+    fn config_key(&self) -> Option<&'static str> {
+        Some("mouse_sensitivity_fix")
     }
 
     fn apply(&mut self) -> Result<(), String> {
@@ -80,5 +39,45 @@ impl Patch for MouseSensitivityFix {
         utils::patch_bytes(self.target_address_2, self.original_bytes_2.as_slice())?;
 
         Ok(())
+    }
+
+    fn name(&self) -> &'static str {
+        "Mouse Sensitivity Fix"
+    }
+
+    fn init() -> Result<Box<dyn Patch>, String>
+    where
+        Self: Sized,
+    {
+        let game_module = libmem::find_module("ShadowOfMordor.exe").unwrap();
+
+        let target_address_1 = unsafe {
+            libmem::sig_scan(
+                "F3 41 0F 59 CD F3 0F 58 C1 F3 0F 11 45",
+                game_module.base,
+                game_module.size,
+            )
+            .ok_or("signature not found")
+            .unwrap()
+        };
+        let target_address_2 = unsafe {
+            libmem::sig_scan(
+                "F3 41 0F 59 D5 F3 44 0F 11 5D",
+                game_module.base,
+                game_module.size,
+            )
+            .ok_or("signature not found")
+            .unwrap()
+        };
+
+        let original_bytes_1 = unsafe { libmem::read_memory::<_>(target_address_1) };
+        let original_bytes_2 = unsafe { libmem::read_memory::<_>(target_address_2) };
+
+        Ok(Box::new(Self {
+            target_address_1,
+            target_address_2,
+            original_bytes_1: Box::new(original_bytes_1),
+            original_bytes_2: Box::new(original_bytes_2),
+        }))
     }
 }

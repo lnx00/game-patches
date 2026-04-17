@@ -7,7 +7,11 @@ use windows::Win32::{
 use crate::{
     config::CONFIG,
     framework::{manager::PatchManager, patch::Patch},
-    patches::disable_camera_smoothing::DisableCameraSmoothing,
+    game::wait_for_game,
+    patches::{
+        disable_camera_smoothing::DisableCameraSmoothing,
+        mouse_sensitivity_fix::MouseSensitivityFix, uniform_camera_speed::UniformCameraSpeed,
+    },
 };
 
 mod config;
@@ -24,10 +28,14 @@ const PKG_AUTHORS: Option<&str> = option_env!("CARGO_PKG_AUTHORS");
 const VK_F11: i32 = 0x7A;
 
 fn run(allow_unloading: bool) -> Result<(), String> {
+    wait_for_game();
+
     let mut patch_manager = PatchManager::new();
 
     println!("initializing patches...");
     patch_manager.register(DisableCameraSmoothing::init());
+    patch_manager.register(UniformCameraSpeed::init());
+    patch_manager.register(MouseSensitivityFix::init());
 
     println!("applying patches...");
     patch_manager.apply_all();

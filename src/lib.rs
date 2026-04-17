@@ -12,13 +12,13 @@ use crate::{
         disable_camera_smoothing::DisableCameraSmoothing,
         mouse_sensitivity_fix::MouseSensitivityFix, uniform_camera_speed::UniformCameraSpeed,
     },
+    utils::platform,
 };
 
 mod config;
 mod framework;
 mod game;
 mod patches;
-mod platform;
 mod utils;
 
 const PKG_NAME: Option<&str> = option_env!("CARGO_PKG_NAME");
@@ -79,7 +79,7 @@ fn main_thread() {
 
 #[unsafe(no_mangle)]
 #[allow(non_snake_case)]
-extern "system" fn DllMain(dll_module: HINSTANCE, call_reason: u32, _: *mut ()) -> bool {
+extern "system" fn DllMain(_dll_module: HINSTANCE, call_reason: u32, _: *mut ()) -> bool {
     match call_reason {
         DLL_PROCESS_ATTACH => {
             thread::spawn(main_thread);

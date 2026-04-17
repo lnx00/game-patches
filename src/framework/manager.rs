@@ -1,6 +1,6 @@
 use crate::{
     config::CONFIG,
-    framework::patch::{self, Patch},
+    framework::patch::Patch,
 };
 
 struct ManagedPatch {

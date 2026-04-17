@@ -1,3 +1,5 @@
+pub mod platform;
+
 pub fn patch_bytes(address: usize, bytes: &[u8]) -> Result<(), String> {
     unsafe {
         let old_protect = libmem::prot_memory(address, 0, libmem::Prot::XRW)

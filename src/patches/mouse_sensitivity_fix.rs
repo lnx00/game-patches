@@ -1,4 +1,8 @@
-use crate::{framework::patch::Patch, utils};
+use crate::{
+    framework::patch::Patch,
+    sdk::{GameSdk, offsets::sigs},
+    utils,
+};
 
 /*
     (Experimental)
@@ -49,20 +53,21 @@ impl Patch for MouseSensitivityFix {
     where
         Self: Sized,
     {
-        let game_module = libmem::find_module("ShadowOfMordor.exe").unwrap();
+        let game_module = &GameSdk::inst().game_module;
 
         let target_address_1 = unsafe {
             libmem::sig_scan(
-                "F3 41 0F 59 CD F3 0F 58 C1 F3 0F 11 45",
+                sigs::MULT_X_AXIS_DELTA_TIME,
                 game_module.base,
                 game_module.size,
             )
             .ok_or("signature not found")
             .unwrap()
         };
+
         let target_address_2 = unsafe {
             libmem::sig_scan(
-                "F3 41 0F 59 D5 F3 44 0F 11 5D",
+                sigs::MULT_Y_AXIS_DELTA_TIME,
                 game_module.base,
                 game_module.size,
             )

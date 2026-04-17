@@ -1,4 +1,4 @@
-use crate::{framework::patch::Patch, utils};
+use crate::{framework::patch::Patch, sdk::{GameSdk, offsets::sigs}, utils};
 
 /*
     The game uses factors 200 (x-axis) and 105 (y-axis) for the camera speed.
@@ -39,10 +39,10 @@ impl Patch for UniformCameraSpeed {
     where
         Self: Sized,
     {
-        let game_module = libmem::find_module("ShadowOfMordor.exe").unwrap();
+        let game_module = &GameSdk::inst().game_module;
         let target_address = unsafe {
             libmem::sig_scan(
-                "F3 0F 10 0D ? ? ? ? F3 0F 10 15 ? ? ? ? EB ? F3 0F 10 54 24",
+                sigs::LOAD_X_AXIS_FACTOR,
                 game_module.base,
                 game_module.size,
             )

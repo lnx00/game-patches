@@ -1,4 +1,8 @@
-use crate::{framework::patch::Patch, utils};
+use crate::{
+    framework::patch::Patch,
+    sdk::{GameSdk, offsets::sigs},
+    utils,
+};
 
 /*
     The game loads a smoothing value of 0.05 by default. We can disable
@@ -39,11 +43,15 @@ impl Patch for DisableCameraSmoothing {
     where
         Self: Sized,
     {
-        let game_module = libmem::find_module("ShadowOfMordor.exe").unwrap();
+        let game_module = &GameSdk::inst().game_module;
         let target_address = unsafe {
-            libmem::sig_scan("84 C0 75 ? F3 0F 10 25", game_module.base, game_module.size)
-                .ok_or("signature not found")
-                .unwrap()
+            libmem::sig_scan(
+                sigs::LOAD_CAMERA_SMOOTHING_FACTOR,
+                game_module.base,
+                game_module.size,
+            )
+            .ok_or("signature not found")
+            .unwrap()
         };
 
         let original_bytes = unsafe { libmem::read_memory::<_>(target_address) };

@@ -5,20 +5,17 @@ use windows::Win32::{
 };
 
 use crate::{
-    config::CONFIG,
-    framework::{manager::PatchManager, patch::Patch},
-    game::wait_for_game,
-    patches::{
+    config::CONFIG, framework::{manager::PatchManager, patch::Patch}, game::wait_for_game, patches::{
         disable_camera_smoothing::DisableCameraSmoothing,
         mouse_sensitivity_fix::MouseSensitivityFix, uniform_camera_speed::UniformCameraSpeed,
-    },
-    utils::platform,
+    }, sdk::GameSdk, utils::platform
 };
 
 mod config;
 mod framework;
 mod game;
 mod patches;
+mod sdk;
 mod utils;
 
 const PKG_NAME: Option<&str> = option_env!("CARGO_PKG_NAME");
@@ -28,7 +25,11 @@ const PKG_AUTHORS: Option<&str> = option_env!("CARGO_PKG_AUTHORS");
 const VK_F11: i32 = 0x7A;
 
 fn run(allow_unloading: bool) -> Result<(), String> {
+    println!("waiting for game...");
     wait_for_game();
+
+    println!("initializing sdk...");
+    GameSdk::init()?;
 
     let mut patch_manager = PatchManager::new();
 

@@ -1,4 +1,4 @@
-use std::sync::OnceLock;
+use std::{sync::OnceLock, thread};
 
 use libmem::Module;
 
@@ -29,4 +29,8 @@ impl GameSdk {
     pub fn inst() -> &'static GameSdk {
         SDK_INSTANCE.get().expect("SDK was accessed before initialization")
     }
+}
+
+pub fn wait_for_game() {
+    thread::sleep(std::time::Duration::from_secs(5));
 }

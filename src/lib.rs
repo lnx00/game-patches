@@ -5,15 +5,18 @@ use windows::Win32::{
 };
 
 use crate::{
-    config::CONFIG, framework::{manager::PatchManager, patch::Patch}, game::wait_for_game, patches::{
+    config::CONFIG,
+    framework::manager::PatchManager,
+    patches::{
         disable_camera_smoothing::DisableCameraSmoothing,
         mouse_sensitivity_fix::MouseSensitivityFix, uniform_camera_speed::UniformCameraSpeed,
-    }, sdk::GameSdk, utils::platform
+    },
+    sdk::GameSdk,
+    utils::platform,
 };
 
 mod config;
 mod framework;
-mod game;
 mod patches;
 mod sdk;
 mod utils;
@@ -26,7 +29,7 @@ const VK_F11: i32 = 0x7A;
 
 fn run(allow_unloading: bool) -> Result<(), String> {
     println!("waiting for game...");
-    wait_for_game();
+    sdk::wait_for_game();
 
     println!("initializing sdk...");
     GameSdk::init()?;
@@ -34,9 +37,9 @@ fn run(allow_unloading: bool) -> Result<(), String> {
     let mut patch_manager = PatchManager::new();
 
     println!("initializing patches...");
-    patch_manager.register(DisableCameraSmoothing::init());
-    patch_manager.register(UniformCameraSpeed::init());
-    patch_manager.register(MouseSensitivityFix::init());
+    patch_manager.register::<DisableCameraSmoothing>();
+    patch_manager.register::<UniformCameraSpeed>();
+    patch_manager.register::<MouseSensitivityFix>();
 
     println!("applying patches...");
     patch_manager.apply_all();

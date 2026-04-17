@@ -1,10 +1,8 @@
-use crate::{
-    config::CONFIG,
-    framework::patch::Patch,
-};
+use crate::{config::CONFIG, framework::patch::Patch};
 
 struct ManagedPatch {
     patch: Box<dyn Patch>,
+    name: &'static str,
     is_applied: bool,
 }
 
@@ -19,19 +17,19 @@ impl PatchManager {
         }
     }
 
-    pub fn register(&mut self, patch: Result<Box<dyn Patch>, String>) {
-        match patch {
+    pub fn register<P: Patch + 'static>(&mut self) {
+        match P::init() {
             Ok(patch) => {
-                let patch_name = patch.name();
                 self.patches.push(ManagedPatch {
                     patch,
+                    name: P::name(),
                     is_applied: false,
                 });
 
-                println!("- registered patch '{}'", patch_name);
+                println!("- registered patch '{}'", P::name());
             }
             Err(e) => {
-                eprintln!("- failed to register patch: {}", e);
+                eprintln!("- failed to register patch '{}': {}", P::name(), e);
             }
         };
     }
@@ -44,24 +42,21 @@ impl PatchManager {
             };
 
             if !enabled {
-                println!("- skipping patch '{}': disabled", managed.patch.name());
+                println!("- skipping patch '{}': disabled", managed.name);
                 continue;
             }
 
             if managed.is_applied {
-                println!(
-                    "- skipping patch '{}': already applied",
-                    managed.patch.name()
-                );
+                println!("- skipping patch '{}': already applied", managed.name);
                 continue;
             }
 
             match managed.patch.apply() {
                 Ok(_) => {
-                    println!("- applied patch '{}'", managed.patch.name());
+                    println!("- applied patch '{}'", managed.name);
                     managed.is_applied = true;
                 }
-                Err(e) => eprintln!("- failed to apply patch '{}': {}", managed.patch.name(), e),
+                Err(e) => eprintln!("- failed to apply patch '{}': {}", managed.name, e),
             }
         }
     }
@@ -70,9 +65,9 @@ impl PatchManager {
         for managed in self.patches.iter_mut().rev() {
             if managed.is_applied {
                 if let Err(e) = managed.patch.revert() {
-                    eprintln!("- faild to revert patch '{}': {}", managed.patch.name(), e);
+                    eprintln!("- faild to revert patch '{}': {}", managed.name, e);
                 } else {
-                    println!("- reverted patch '{}'", managed.patch.name());
+                    println!("- reverted patch '{}'", managed.name);
                 }
             }
         }

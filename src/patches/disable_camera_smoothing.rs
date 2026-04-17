@@ -15,6 +15,13 @@ pub struct DisableCameraSmoothing {
 }
 
 impl Patch for DisableCameraSmoothing {
+    fn name() -> &'static str
+    where
+        Self: Sized,
+    {
+        "Disable Mouse Smoothing"
+    }
+
     fn config_key(&self) -> Option<&'static str> {
         Some("disable_camera_smoothing")
     }
@@ -33,10 +40,6 @@ impl Patch for DisableCameraSmoothing {
         utils::patch_bytes(self.target_address, self.original_bytes.as_slice())?;
 
         Ok(())
-    }
-
-    fn name(&self) -> &'static str {
-        return "Disable Mouse Smoothing";
     }
 
     fn init() -> Result<Box<dyn Patch>, String>

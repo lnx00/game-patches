@@ -24,6 +24,13 @@ pub struct MouseSensitivityFix {
 }
 
 impl Patch for MouseSensitivityFix {
+    fn name() -> &'static str
+    where
+        Self: Sized,
+    {
+        "Mouse Sensitivity Fix"
+    }
+
     fn config_key(&self) -> Option<&'static str> {
         Some("mouse_sensitivity_fix")
     }
@@ -43,10 +50,6 @@ impl Patch for MouseSensitivityFix {
         utils::patch_bytes(self.target_address_2, self.original_bytes_2.as_slice())?;
 
         Ok(())
-    }
-
-    fn name(&self) -> &'static str {
-        "Mouse Sensitivity Fix"
     }
 
     fn init() -> Result<Box<dyn Patch>, String>

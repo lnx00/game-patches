@@ -1,4 +1,8 @@
-use crate::{framework::patch::Patch, sdk::{GameSdk, offsets::sigs}, utils};
+use crate::{
+    framework::patch::Patch,
+    sdk::{GameSdk, offsets::sigs},
+    utils,
+};
 
 /*
     The game uses factors 200 (x-axis) and 105 (y-axis) for the camera speed.
@@ -11,6 +15,13 @@ pub struct UniformCameraSpeed {
 }
 
 impl Patch for UniformCameraSpeed {
+    fn name() -> &'static str
+    where
+        Self: Sized,
+    {
+        "Uniform Camera Speed"
+    }
+
     fn config_key(&self) -> Option<&'static str> {
         Some("uniform_camera_speed")
     }
@@ -31,23 +42,15 @@ impl Patch for UniformCameraSpeed {
         Ok(())
     }
 
-    fn name(&self) -> &'static str {
-        "Uniform Camera Speed"
-    }
-
     fn init() -> Result<Box<dyn Patch>, String>
     where
         Self: Sized,
     {
         let game_module = &GameSdk::inst().game_module;
         let target_address = unsafe {
-            libmem::sig_scan(
-                sigs::LOAD_X_AXIS_FACTOR,
-                game_module.base,
-                game_module.size,
-            )
-            .ok_or("signature not found")
-            .unwrap()
+            libmem::sig_scan(sigs::LOAD_X_AXIS_FACTOR, game_module.base, game_module.size)
+                .ok_or("signature not found")
+                .unwrap()
         };
 
         let original_bytes = unsafe { libmem::read_memory::<_>(target_address) };

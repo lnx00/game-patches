@@ -23,7 +23,6 @@ pub trait Patch {
 
 macro_rules! patch_types {
     ($m:ident) => {
-        $m!(DisableCameraSmoothing);
         $m!(UniformCameraSpeed);
         $m!(MouseSensitivityFix);
     };

@@ -29,10 +29,36 @@ const PKG_VERSION: Option<&str> = option_env!("CARGO_PKG_VERSION");
 const PKG_AUTHORS: Option<&str> = option_env!("CARGO_PKG_AUTHORS");
 
 const VK_F11: i32 = 0x7A;
+const EXPECTED_TIMESTAMP: u32 = 0x5FDE56C;
 
-fn run(allow_unloading: bool) -> Result<(), String> {
+fn check_game_version(silent: bool) {
+    if let Some(current_timestamp) = platform::get_time_date_stamp() {
+        if current_timestamp != EXPECTED_TIMESTAMP {
+            tracing::warn!(
+                "timestamp mismatch! expected {:#X}, got {:#X}.",
+                EXPECTED_TIMESTAMP,
+                current_timestamp
+            );
+
+            if !silent {
+                platform::msg_box(
+                    "Game version mismatch!\nThe mod may crash or not work correctly.",
+                    "Version Mismatch",
+                    platform::MsgBoxType::Warning,
+                );
+            }
+        }
+    } else {
+        tracing::warn!("failed to check game version!");
+    }
+}
+
+fn run(skip_version_check: bool, allow_unloading: bool) -> Result<(), String> {
     tracing::info!("waiting for game...");
     sdk::wait_for_game();
+
+    tracing::info!("checking game version...");
+    check_game_version(skip_version_check);
 
     tracing::info!("initializing sdk...");
     GameSdk::init()?;
@@ -55,6 +81,8 @@ fn run(allow_unloading: bool) -> Result<(), String> {
 
         tracing::info!("reverting patches...");
         patch_manager.revert_all();
+    } else {
+        tracing::info!("patches ready!");
     }
 
     Ok(())
@@ -77,7 +105,7 @@ fn main_thread() {
     tracing_subscriber::fmt().pretty().init();
 
     // Run main logic
-    if let Err(e) = run(CONFIG.allow_unloading) {
+    if let Err(e) = run(CONFIG.suppress_version_mismatch, CONFIG.allow_unloading) {
         tracing::error!("Error: {}", e);
         platform::msg_box(&e, "Error", platform::MsgBoxType::Error);
     }

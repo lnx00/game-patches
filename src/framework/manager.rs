@@ -26,10 +26,10 @@ impl PatchManager {
                     is_applied: false,
                 });
 
-                tracing::info!("- registered patch '{}'", P::name());
+                tracing::info!("registered patch '{}'", P::name());
             }
             Err(e) => {
-                tracing::error!("- failed to register patch '{}': {}", P::name(), e);
+                tracing::error!("failed to register patch '{}': {}", P::name(), e);
             }
         };
     }
@@ -37,26 +37,26 @@ impl PatchManager {
     pub fn apply_all(&mut self) {
         for managed in &mut self.patches {
             let enabled = match managed.patch.config_key() {
-                Some(key) => CONFIG.patch_enabled(key, true),
+                Some(key) => CONFIG.patch_enabled(key),
                 None => true,
             };
 
             if !enabled {
-                tracing::info!("- skipping patch '{}': disabled", managed.name);
+                tracing::info!("skipping patch '{}' (disabled)", managed.name);
                 continue;
             }
 
             if managed.is_applied {
-                tracing::info!("- skipping patch '{}': already applied", managed.name);
+                tracing::info!("skipping patch '{}' (already applied)", managed.name);
                 continue;
             }
 
             match managed.patch.apply() {
                 Ok(_) => {
-                    tracing::info!("- applied patch '{}'", managed.name);
+                    tracing::info!("applied patch '{}'", managed.name);
                     managed.is_applied = true;
                 }
-                Err(e) => tracing::error!("- failed to apply patch '{}': {}", managed.name, e),
+                Err(e) => tracing::error!("failed to apply patch '{}': {}", managed.name, e),
             }
         }
     }
@@ -64,10 +64,12 @@ impl PatchManager {
     pub fn revert_all(&mut self) {
         for managed in self.patches.iter_mut().rev() {
             if managed.is_applied {
-                if let Err(e) = managed.patch.revert() {
-                    tracing::error!("- faild to revert patch '{}': {}", managed.name, e);
-                } else {
-                    tracing::info!("- reverted patch '{}'", managed.name);
+                match managed.patch.revert() {
+                    Ok(_) => {
+                        tracing::info!("reverted patch '{}'", managed.name);
+                        managed.is_applied = false;
+                    }
+                    Err(e) => tracing::error!("failed to revert patch '{}': {}", managed.name, e),
                 }
             }
         }

@@ -1,7 +1,7 @@
 use crate::{
     framework::patch::Patch,
     sdk::{GameSdk, offsets::sigs},
-    utils,
+    utils::byte_patch::BytePatch,
 };
 
 /*
@@ -10,8 +10,7 @@ use crate::{
 */
 
 pub struct DisableCameraSmoothing {
-    target_address: usize,
-    original_bytes: Box<[u8; 10]>,
+    byte_patch: BytePatch<10>,
 }
 
 impl Patch for DisableCameraSmoothing {
@@ -27,17 +26,13 @@ impl Patch for DisableCameraSmoothing {
     }
 
     fn apply(&mut self) -> Result<(), String> {
-        let patch_bytes: [u8; 10] = [
-            0x66, 0x0F, 0xEF, 0xE4, // pxor xmm4, xmm4
-            0x90, 0x90, 0x90, 0x90, 0x90, 0x90, // nop
-        ];
-        utils::patch_bytes(self.target_address, &patch_bytes)?;
+        self.byte_patch.apply()?;
 
         Ok(())
     }
 
     fn revert(&mut self) -> Result<(), String> {
-        utils::patch_bytes(self.target_address, self.original_bytes.as_slice())?;
+        self.byte_patch.revert()?;
 
         Ok(())
     }
@@ -56,11 +51,13 @@ impl Patch for DisableCameraSmoothing {
             .ok_or("signature not found")?
         };
 
-        let original_bytes = unsafe { libmem::read_memory::<_>(target_address) };
+        let patch_bytes: [u8; _] = [
+            0x66, 0x0F, 0xEF, 0xE4, // pxor xmm4, xmm4
+            0x90, 0x90, 0x90, 0x90, 0x90, 0x90, // nop
+        ];
 
-        Ok(Box::new(Self {
-            target_address,
-            original_bytes: Box::new(original_bytes),
-        }))
+        let byte_patch = BytePatch::new(target_address, patch_bytes);
+
+        Ok(Box::new(Self { byte_patch }))
     }
 }

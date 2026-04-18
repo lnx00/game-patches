@@ -1,7 +1,7 @@
 use crate::{
     framework::patch::Patch,
     sdk::{GameSdk, offsets::sigs},
-    utils,
+    utils::byte_patch::BytePatch,
 };
 
 /*
@@ -16,11 +16,8 @@ use crate::{
 */
 
 pub struct MouseSensitivityFix {
-    target_address_1: usize,
-    target_address_2: usize,
-
-    original_bytes_1: Box<[u8; 5]>,
-    original_bytes_2: Box<[u8; 5]>,
+    byte_patch_1: BytePatch<5>,
+    byte_patch_2: BytePatch<5>,
 }
 
 impl Patch for MouseSensitivityFix {
@@ -36,19 +33,14 @@ impl Patch for MouseSensitivityFix {
     }
 
     fn apply(&mut self) -> Result<(), String> {
-        let patch_bytes_1: [u8; 5] = [0xF3, 0x41, 0x0F, 0x59, 0xCA]; // mulss xmm1, xmm10
-        let patch_bytes_2: [u8; 5] = [0xF3, 0x41, 0x0F, 0x59, 0xD2]; // mulss xmm2, xmm10
-
-        utils::patch_bytes(self.target_address_1, &patch_bytes_1)?;
-        utils::patch_bytes(self.target_address_2, &patch_bytes_2)?;
-
+        self.byte_patch_1.apply()?;
+        self.byte_patch_2.apply()?;
         Ok(())
     }
 
     fn revert(&mut self) -> Result<(), String> {
-        utils::patch_bytes(self.target_address_1, self.original_bytes_1.as_slice())?;
-        utils::patch_bytes(self.target_address_2, self.original_bytes_2.as_slice())?;
-
+        self.byte_patch_1.revert()?;
+        self.byte_patch_2.revert()?;
         Ok(())
     }
 
@@ -76,14 +68,15 @@ impl Patch for MouseSensitivityFix {
             .ok_or("signature not found")?
         };
 
-        let original_bytes_1 = unsafe { libmem::read_memory::<_>(target_address_1) };
-        let original_bytes_2 = unsafe { libmem::read_memory::<_>(target_address_2) };
+        let patch_bytes_1: [u8; 5] = [0xF3, 0x41, 0x0F, 0x59, 0xCA]; // mulss xmm1, xmm10
+        let patch_bytes_2: [u8; 5] = [0xF3, 0x41, 0x0F, 0x59, 0xD2]; // mulss xmm2, xmm10
+
+        let byte_patch_1 = BytePatch::new(target_address_1, patch_bytes_1);
+        let byte_patch_2 = BytePatch::new(target_address_2, patch_bytes_2);
 
         Ok(Box::new(Self {
-            target_address_1,
-            target_address_2,
-            original_bytes_1: Box::new(original_bytes_1),
-            original_bytes_2: Box::new(original_bytes_2),
+            byte_patch_1,
+            byte_patch_2,
         }))
     }
 }

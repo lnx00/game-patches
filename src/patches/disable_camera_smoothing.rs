@@ -1,7 +1,6 @@
 use crate::{
-    framework::patch::Patch,
+    framework::{byte_patch::BytePatch, patch::Patch},
     sdk::{GameSdk, offsets::sigs},
-    utils::byte_patch::BytePatch,
 };
 
 /*

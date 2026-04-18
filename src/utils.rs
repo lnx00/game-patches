@@ -1,4 +1,3 @@
-pub mod byte_patch;
 pub mod platform;
 
 pub unsafe fn patch_bytes(address: usize, bytes: &[u8]) -> Result<(), String> {

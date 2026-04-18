@@ -64,8 +64,7 @@ impl Patch for MouseSensitivityFix {
                 game_module.base,
                 game_module.size,
             )
-            .ok_or("signature not found")
-            .unwrap()
+            .ok_or("signature not found")?
         };
 
         let target_address_2 = unsafe {
@@ -74,8 +73,7 @@ impl Patch for MouseSensitivityFix {
                 game_module.base,
                 game_module.size,
             )
-            .ok_or("signature not found")
-            .unwrap()
+            .ok_or("signature not found")?
         };
 
         let original_bytes_1 = unsafe { libmem::read_memory::<_>(target_address_1) };

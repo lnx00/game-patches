@@ -28,29 +28,29 @@ const PKG_AUTHORS: Option<&str> = option_env!("CARGO_PKG_AUTHORS");
 const VK_F11: i32 = 0x7A;
 
 fn run(allow_unloading: bool) -> Result<(), String> {
-    println!("waiting for game...");
+    tracing::info!("waiting for game...");
     sdk::wait_for_game();
 
-    println!("initializing sdk...");
+    tracing::info!("initializing sdk...");
     GameSdk::init()?;
 
     let mut patch_manager = PatchManager::new();
 
-    println!("initializing patches...");
+    tracing::info!("initializing patches...");
     patch_manager.register::<DisableCameraSmoothing>();
     patch_manager.register::<UniformCameraSpeed>();
     patch_manager.register::<MouseSensitivityFix>();
 
-    println!("applying patches...");
+    tracing::info!("applying patches...");
     patch_manager.apply_all();
 
     if allow_unloading {
-        println!("patches ready! press F11 to unload.");
+        tracing::info!("patches ready! press F11 to unload.");
         while !platform::is_button_down(VK_F11) {
             thread::sleep(std::time::Duration::from_millis(100));
         }
 
-        println!("reverting patches...");
+        tracing::info!("reverting patches...");
         patch_manager.revert_all();
     }
 
@@ -67,11 +67,15 @@ fn main_thread() {
             PKG_AUTHORS.unwrap_or("unknown")
         );
         platform::attach_console(&title);
+        let _ = enable_ansi_support::enable_ansi_support();
     }
+
+    // Initialize logger
+    tracing_subscriber::fmt().pretty().init();
 
     // Run main logic
     if let Err(e) = run(CONFIG.allow_unloading) {
-        eprintln!("Error: {}", e);
+        tracing::error!("Error: {}", e);
         platform::msg_box(&e, "Error", platform::MsgBoxType::Error);
     }
 

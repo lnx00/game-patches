@@ -26,10 +26,10 @@ impl PatchManager {
                     is_applied: false,
                 });
 
-                println!("- registered patch '{}'", P::name());
+                tracing::info!("- registered patch '{}'", P::name());
             }
             Err(e) => {
-                eprintln!("- failed to register patch '{}': {}", P::name(), e);
+                tracing::error!("- failed to register patch '{}': {}", P::name(), e);
             }
         };
     }
@@ -42,21 +42,21 @@ impl PatchManager {
             };
 
             if !enabled {
-                println!("- skipping patch '{}': disabled", managed.name);
+                tracing::info!("- skipping patch '{}': disabled", managed.name);
                 continue;
             }
 
             if managed.is_applied {
-                println!("- skipping patch '{}': already applied", managed.name);
+                tracing::info!("- skipping patch '{}': already applied", managed.name);
                 continue;
             }
 
             match managed.patch.apply() {
                 Ok(_) => {
-                    println!("- applied patch '{}'", managed.name);
+                    tracing::info!("- applied patch '{}'", managed.name);
                     managed.is_applied = true;
                 }
-                Err(e) => eprintln!("- failed to apply patch '{}': {}", managed.name, e),
+                Err(e) => tracing::error!("- failed to apply patch '{}': {}", managed.name, e),
             }
         }
     }
@@ -65,9 +65,9 @@ impl PatchManager {
         for managed in self.patches.iter_mut().rev() {
             if managed.is_applied {
                 if let Err(e) = managed.patch.revert() {
-                    eprintln!("- faild to revert patch '{}': {}", managed.name, e);
+                    tracing::error!("- faild to revert patch '{}': {}", managed.name, e);
                 } else {
-                    println!("- reverted patch '{}'", managed.name);
+                    tracing::info!("- reverted patch '{}'", managed.name);
                 }
             }
         }

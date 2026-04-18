@@ -49,8 +49,7 @@ impl Patch for UniformCameraSpeed {
         let game_module = &GameSdk::inst().game_module;
         let target_address = unsafe {
             libmem::sig_scan(sigs::LOAD_X_AXIS_FACTOR, game_module.base, game_module.size)
-                .ok_or("signature not found")
-                .unwrap()
+                .ok_or("signature not found")?
         };
 
         let original_bytes = unsafe { libmem::read_memory::<_>(target_address) };

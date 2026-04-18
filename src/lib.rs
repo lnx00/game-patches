@@ -29,7 +29,7 @@ const PKG_VERSION: Option<&str> = option_env!("CARGO_PKG_VERSION");
 const PKG_AUTHORS: Option<&str> = option_env!("CARGO_PKG_AUTHORS");
 
 const VK_F11: i32 = 0x7A;
-const EXPECTED_TIMESTAMP: u32 = 0x5FDE56C;
+const EXPECTED_TIMESTAMP: u32 = 0x5FDE56CF;
 
 fn check_game_version(silent: bool) {
     if let Some(current_timestamp) = platform::get_time_date_stamp() {

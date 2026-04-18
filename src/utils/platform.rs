@@ -1,4 +1,4 @@
-use windows::Win32::System::Console::{AllocConsole, FreeConsole, SetConsoleTitleA};
+use windows::Win32::System::Console::{AllocConsole, FreeConsole, SetConsoleTitleW};
 use windows::Win32::System::Diagnostics::Debug::IMAGE_NT_HEADERS64;
 use windows::Win32::System::LibraryLoader::GetModuleHandleW;
 use windows::Win32::System::SystemServices::{
@@ -6,17 +6,13 @@ use windows::Win32::System::SystemServices::{
 };
 use windows::Win32::UI::Input::KeyboardAndMouse::GetAsyncKeyState;
 use windows::Win32::UI::WindowsAndMessaging::*;
-use windows::core::{PCSTR, PCWSTR};
+use windows::core::{HSTRING, PCWSTR};
 
 #[allow(dead_code)]
 pub enum MsgBoxType {
     Info,
     Warning,
     Error,
-}
-
-fn to_pcstr(text: &str) -> PCSTR {
-    PCSTR(format!("{}\0", text).as_ptr())
 }
 
 pub fn msg_box(msg: &str, title: &str, box_type: MsgBoxType) {
@@ -26,15 +22,25 @@ pub fn msg_box(msg: &str, title: &str, box_type: MsgBoxType) {
         MsgBoxType::Error => MB_ICONERROR,
     };
 
+    let msg_w = HSTRING::from(msg);
+    let title_w = HSTRING::from(title);
+
     unsafe {
-        MessageBoxA(None, to_pcstr(msg), to_pcstr(title), MB_OK | icon);
+        MessageBoxW(
+            None,
+            PCWSTR(msg_w.as_ptr()),
+            PCWSTR(title_w.as_ptr()),
+            MB_OK | icon,
+        );
     }
 }
 
 pub fn attach_console(title: &str) {
+    let title_w = HSTRING::from(title);
+
     unsafe {
         let _ = AllocConsole();
-        let _ = SetConsoleTitleA(to_pcstr(title));
+        let _ = SetConsoleTitleW(PCWSTR(title_w.as_ptr()));
     }
 }
 

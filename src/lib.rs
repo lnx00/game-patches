@@ -7,7 +7,7 @@ use windows::Win32::{
     },
 };
 
-use crate::{config::CONFIG, framework::manager::PatchManager, sdk::GameSdk, utils::platform};
+use crate::{config::CONFIG, framework::manager::PatchManager, utils::platform};
 
 mod config;
 mod framework;
@@ -15,44 +15,33 @@ mod patches;
 mod sdk;
 mod utils;
 
-const PKG_NAME: Option<&str> = option_env!("CARGO_PKG_NAME");
-const PKG_VERSION: Option<&str> = option_env!("CARGO_PKG_VERSION");
-const PKG_AUTHORS: Option<&str> = option_env!("CARGO_PKG_AUTHORS");
+const PKG_NAME: &str = env!("CARGO_PKG_NAME");
+const PKG_VERSION: &str = env!("CARGO_PKG_VERSION");
+const PKG_AUTHORS: &str = env!("CARGO_PKG_AUTHORS");
 
 const VK_F11: i32 = 0x7A;
-const EXPECTED_TIMESTAMP: u32 = 0x5FDE56CF;
-
-fn check_game_version() {
-    if let Some(current_timestamp) = platform::get_time_date_stamp() {
-        if current_timestamp != EXPECTED_TIMESTAMP {
-            tracing::warn!(
-                "timestamp mismatch! expected {:#X}, got {:#X}.",
-                EXPECTED_TIMESTAMP,
-                current_timestamp
-            );
-
-            if !CONFIG.suppress_version_mismatch {
-                platform::msg_box(
-                    "Game version mismatch!\nThe mod may crash or not work correctly.",
-                    "Version Mismatch",
-                    platform::MsgBoxType::Warning,
-                );
-            }
-        }
-    } else {
-        tracing::warn!("failed to check game version!");
-    }
-}
 
 fn run() -> Result<(), String> {
     tracing::info!("waiting for game...");
     sdk::wait_for_game(std::time::Duration::from_secs(15))?;
 
     tracing::info!("checking game version...");
-    check_game_version();
+    match sdk::check_game_version() {
+        Ok(version) => tracing::info!("game version ({:X}) validated", version),
+        Err(e) => {
+            tracing::warn!("failed to check game version: {}", e);
+            if !CONFIG.suppress_version_mismatch {
+                platform::msg_box(
+                    &format!("Failed to check game version:\n{}", e),
+                    PKG_NAME,
+                    platform::MsgBoxType::Warning,
+                );
+            }
+        }
+    }
 
     tracing::info!("initializing sdk...");
-    GameSdk::init()?;
+    sdk::GameSdk::init()?;
 
     let mut patch_manager = PatchManager::new();
 
@@ -80,18 +69,14 @@ fn run() -> Result<(), String> {
 fn main_thread() {
     // Attach console window
     if CONFIG.show_console {
-        let title = format!(
-            "{} v{} by {}",
-            PKG_NAME.unwrap_or("package"),
-            PKG_VERSION.unwrap_or("?.?.?"),
-            PKG_AUTHORS.unwrap_or("unknown")
-        );
+        let title = format!("{} v{} by {}", PKG_NAME, PKG_VERSION, PKG_AUTHORS);
         platform::attach_console(&title);
         let _ = enable_ansi_support::enable_ansi_support();
     }
 
     // Initialize logger
     tracing_subscriber::fmt().pretty().init();
+    tracing::info!("running {} v{} by {}", PKG_NAME, PKG_VERSION, PKG_AUTHORS);
 
     // Run main logic
     if let Err(e) = run() {

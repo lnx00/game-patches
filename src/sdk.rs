@@ -2,7 +2,12 @@ use std::{sync::OnceLock, thread, time::Duration};
 
 use libmem::Module;
 
+use crate::utils::platform;
+
 pub mod offsets;
+
+const GAME_MODULE_NAME: &str = "ShadowOfMordor.exe";
+const GAME_BINARY_TIMESTAMP: u32 = 0x5FDE56CF;
 
 static SDK_INSTANCE: OnceLock<GameSdk> = OnceLock::new();
 
@@ -15,11 +20,11 @@ unsafe impl Sync for GameSdk {}
 
 impl GameSdk {
     pub fn init() -> Result<(), String> {
-        let game_module =
-            libmem::find_module("ShadowOfMordor.exe").ok_or("game module not found")?;
+        let game_module = libmem::find_module(GAME_MODULE_NAME).ok_or("game module not found")?;
 
         tracing::info!(
-            "found game module at {:#X} (size: {:#X})",
+            "found game module '{}' at {:#X} (size: {:#X})",
+            GAME_MODULE_NAME,
             game_module.base,
             game_module.size
         );
@@ -53,7 +58,7 @@ impl GameSdk {
 pub fn wait_for_game(timeout: Duration) -> Result<(), String> {
     let start = std::time::Instant::now();
 
-    while libmem::find_module("ShadowOfMordor.exe").is_none() {
+    while libmem::find_module(GAME_MODULE_NAME).is_none() {
         if start.elapsed() >= timeout {
             return Err("timeout while waiting for game".to_string());
         }
@@ -62,4 +67,19 @@ pub fn wait_for_game(timeout: Duration) -> Result<(), String> {
     }
 
     Ok(())
+}
+
+pub fn check_game_version() -> Result<u32, String> {
+    if let Some(current_timestamp) = platform::get_time_date_stamp() {
+        if current_timestamp != GAME_BINARY_TIMESTAMP {
+            return Err(format!(
+                "timestamp mismatch - expected {}, got {}",
+                GAME_BINARY_TIMESTAMP, current_timestamp
+            ));
+        }
+
+        return Ok(current_timestamp);
+    }
+
+    Err("failed to retrieve timestamp".to_string())
 }

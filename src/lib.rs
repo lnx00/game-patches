@@ -46,7 +46,7 @@ fn check_game_version() {
 
 fn run() -> Result<(), String> {
     tracing::info!("waiting for game...");
-    sdk::wait_for_game();
+    sdk::wait_for_game(std::time::Duration::from_secs(15))?;
 
     tracing::info!("checking game version...");
     check_game_version();
@@ -81,7 +81,7 @@ fn main_thread() {
     // Attach console window
     if CONFIG.show_console {
         let title = format!(
-            "{} {} by {}",
+            "{} v{} by {}",
             PKG_NAME.unwrap_or("package"),
             PKG_VERSION.unwrap_or("?.?.?"),
             PKG_AUTHORS.unwrap_or("unknown")

@@ -38,11 +38,7 @@ impl Patch for UniformCameraSpeed {
     where
         Self: Sized,
     {
-        let game_module = &GameSdk::inst().game_module;
-        let target_address = unsafe {
-            libmem::sig_scan(sigs::LOAD_X_AXIS_FACTOR, game_module.base, game_module.size)
-                .ok_or("signature not found")?
-        };
+        let target_address = GameSdk::inst().find_sig(sigs::LOAD_X_AXIS_FACTOR)?;
 
         let patch_bytes: [u8; 8] = [
             0xF3, 0x0F, 0x10, 0x0D, 0x4C, 0xC1, 0x29,

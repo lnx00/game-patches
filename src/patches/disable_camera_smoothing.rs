@@ -40,15 +40,7 @@ impl Patch for DisableCameraSmoothing {
     where
         Self: Sized,
     {
-        let game_module = &GameSdk::inst().game_module;
-        let target_address = unsafe {
-            libmem::sig_scan(
-                sigs::LOAD_CAMERA_SMOOTHING_FACTOR,
-                game_module.base,
-                game_module.size,
-            )
-            .ok_or("signature not found")?
-        };
+        let target_address = GameSdk::inst().find_sig(sigs::LOAD_CAMERA_SMOOTHING_FACTOR)?;
 
         let patch_bytes: [u8; _] = [
             0x66, 0x0F, 0xEF, 0xE4, // pxor xmm4, xmm4

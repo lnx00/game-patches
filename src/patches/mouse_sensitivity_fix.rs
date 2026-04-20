@@ -47,25 +47,8 @@ impl Patch for MouseSensitivityFix {
     where
         Self: Sized,
     {
-        let game_module = &GameSdk::inst().game_module;
-
-        let target_address_1 = unsafe {
-            libmem::sig_scan(
-                sigs::MULT_X_AXIS_DELTA_TIME,
-                game_module.base,
-                game_module.size,
-            )
-            .ok_or("signature not found")?
-        };
-
-        let target_address_2 = unsafe {
-            libmem::sig_scan(
-                sigs::MULT_Y_AXIS_DELTA_TIME,
-                game_module.base,
-                game_module.size,
-            )
-            .ok_or("signature not found")?
-        };
+        let target_address_1 = GameSdk::inst().find_sig(sigs::MULT_X_AXIS_DELTA_TIME)?;
+        let target_address_2 = GameSdk::inst().find_sig(sigs::MULT_Y_AXIS_DELTA_TIME)?;
 
         let patch_bytes_1: [u8; 5] = [0xF3, 0x41, 0x0F, 0x59, 0xCA]; // mulss xmm1, xmm10
         let patch_bytes_2: [u8; 5] = [0xF3, 0x41, 0x0F, 0x59, 0xD2]; // mulss xmm2, xmm10

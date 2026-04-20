@@ -2,14 +2,16 @@ use std::{collections::HashMap, fs, sync::LazyLock};
 
 use serde::Deserialize;
 
-pub static CONFIG: LazyLock<Config> =
-    LazyLock::new(|| match Config::read("./plugins/mesom_patches.toml") {
-        Some(config) => config,
-        None => {
-            tracing::warn!("failed to load config file! using default config instead.");
-            Config::default()
-        }
-    });
+const CONFIG_FILE_PATH: &str = "./plugins/mesom_patches.toml";
+
+pub static CONFIG: LazyLock<Config> = LazyLock::new(|| {
+    let config_path = std::env::current_exe()
+        .ok()
+        .and_then(|p| p.parent().map(|parent| parent.join(CONFIG_FILE_PATH)))
+        .unwrap_or_else(|| std::path::PathBuf::from(CONFIG_FILE_PATH));
+
+    Config::read(&config_path).unwrap_or_default()
+});
 
 #[derive(Default, Deserialize)]
 #[serde(default)]
@@ -21,7 +23,7 @@ pub struct Config {
 }
 
 impl Config {
-    pub fn read(path: &str) -> Option<Config> {
+    pub fn read(path: impl AsRef<std::path::Path>) -> Option<Config> {
         let contents = fs::read_to_string(path).ok()?;
         let config = toml::from_str(&contents).ok()?;
 

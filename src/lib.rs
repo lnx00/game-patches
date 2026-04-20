@@ -7,16 +7,7 @@ use windows::Win32::{
     },
 };
 
-use crate::{
-    config::CONFIG,
-    framework::manager::PatchManager,
-    patches::{
-        disable_camera_smoothing::DisableCameraSmoothing,
-        mouse_sensitivity_fix::MouseSensitivityFix, uniform_camera_speed::UniformCameraSpeed,
-    },
-    sdk::GameSdk,
-    utils::platform,
-};
+use crate::{config::CONFIG, framework::manager::PatchManager, sdk::GameSdk, utils::platform};
 
 mod config;
 mod framework;
@@ -66,9 +57,7 @@ fn run() -> Result<(), String> {
     let mut patch_manager = PatchManager::new();
 
     tracing::info!("initializing patches...");
-    patch_manager.register::<DisableCameraSmoothing>();
-    patch_manager.register::<UniformCameraSpeed>();
-    patch_manager.register::<MouseSensitivityFix>();
+    patches::register_all(&mut patch_manager);
 
     tracing::info!("applying patches...");
     patch_manager.apply_all();

@@ -24,16 +24,6 @@ impl Patch for UniformCameraSpeed {
         Some("uniform_camera_speed")
     }
 
-    fn apply(&mut self) -> Result<(), String> {
-        self.byte_patch.apply()?;
-        Ok(())
-    }
-
-    fn revert(&mut self) -> Result<(), String> {
-        self.byte_patch.revert()?;
-        Ok(())
-    }
-
     fn init() -> Result<Box<dyn Patch>, String>
     where
         Self: Sized,
@@ -48,5 +38,15 @@ impl Patch for UniformCameraSpeed {
         let byte_patch = BytePatch::new(target_address, patch_bytes);
 
         Ok(Box::new(UniformCameraSpeed { byte_patch }))
+    }
+
+    fn apply(&mut self) -> Result<(), String> {
+        self.byte_patch.apply()?;
+        Ok(())
+    }
+
+    fn revert(&mut self) -> Result<(), String> {
+        self.byte_patch.revert()?;
+        Ok(())
     }
 }

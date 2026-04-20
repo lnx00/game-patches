@@ -24,18 +24,6 @@ impl Patch for DisableCameraSmoothing {
         Some("disable_camera_smoothing")
     }
 
-    fn apply(&mut self) -> Result<(), String> {
-        self.byte_patch.apply()?;
-
-        Ok(())
-    }
-
-    fn revert(&mut self) -> Result<(), String> {
-        self.byte_patch.revert()?;
-
-        Ok(())
-    }
-
     fn init() -> Result<Box<dyn Patch>, String>
     where
         Self: Sized,
@@ -48,7 +36,16 @@ impl Patch for DisableCameraSmoothing {
         ];
 
         let byte_patch = BytePatch::new(target_address, patch_bytes);
-
         Ok(Box::new(Self { byte_patch }))
+    }
+
+    fn apply(&mut self) -> Result<(), String> {
+        self.byte_patch.apply()?;
+        Ok(())
+    }
+
+    fn revert(&mut self) -> Result<(), String> {
+        self.byte_patch.revert()?;
+        Ok(())
     }
 }

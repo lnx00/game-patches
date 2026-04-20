@@ -31,18 +31,6 @@ impl Patch for MouseSensitivityFix {
         Some("mouse_sensitivity_fix")
     }
 
-    fn apply(&mut self) -> Result<(), String> {
-        self.byte_patch_1.apply()?;
-        self.byte_patch_2.apply()?;
-        Ok(())
-    }
-
-    fn revert(&mut self) -> Result<(), String> {
-        self.byte_patch_1.revert()?;
-        self.byte_patch_2.revert()?;
-        Ok(())
-    }
-
     fn init() -> Result<Box<dyn Patch>, String>
     where
         Self: Sized,
@@ -60,5 +48,17 @@ impl Patch for MouseSensitivityFix {
             byte_patch_1,
             byte_patch_2,
         }))
+    }
+
+    fn apply(&mut self) -> Result<(), String> {
+        self.byte_patch_1.apply()?;
+        self.byte_patch_2.apply()?;
+        Ok(())
+    }
+
+    fn revert(&mut self) -> Result<(), String> {
+        self.byte_patch_1.revert()?;
+        self.byte_patch_2.revert()?;
+        Ok(())
     }
 }

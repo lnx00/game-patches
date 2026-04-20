@@ -44,6 +44,7 @@ impl GameSdk {
             .expect("SDK was accessed before initialization")
     }
 
+    /// Finds the signature in the main game module
     pub fn find_sig(&self, signature: &str) -> Result<usize, String> {
         let result =
             unsafe { libmem::sig_scan(signature, self.game_module.base, self.game_module.size) };
@@ -55,6 +56,7 @@ impl GameSdk {
     }
 }
 
+/// Blocks the caller until the game is ready
 pub fn wait_for_game(timeout: Duration) -> Result<(), String> {
     let start = std::time::Instant::now();
 

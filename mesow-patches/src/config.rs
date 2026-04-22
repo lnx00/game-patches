@@ -18,7 +18,6 @@ pub static CONFIG: LazyLock<Config> = LazyLock::new(|| {
 pub struct Config {
     pub show_console: bool,
     pub allow_unloading: bool,
-    pub suppress_version_mismatch: bool,
     pub patches: HashMap<String, bool>,
 }
 

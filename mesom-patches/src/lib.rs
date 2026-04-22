@@ -28,16 +28,7 @@ fn run() -> Result<(), String> {
     tracing::info!("checking game version...");
     match sdk::check_game_version() {
         Ok(version) => tracing::info!("game version ({:X}) validated", version),
-        Err(e) => {
-            tracing::warn!("failed to check game version: {}", e);
-            if !CONFIG.suppress_version_mismatch {
-                platform::msg_box(
-                    &format!("Failed to check game version:\n{}", e),
-                    PKG_NAME,
-                    platform::MsgBoxType::Warning,
-                );
-            }
-        }
+        Err(e) => tracing::warn!("failed to check game version: {}", e),
     }
 
     tracing::info!("initializing sdk...");

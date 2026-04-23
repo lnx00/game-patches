@@ -7,7 +7,9 @@ use windows::Win32::{
     },
 };
 
-use crate::{config::CONFIG, framework::manager::PatchManager, utils::platform};
+use crate::{
+    config::CONFIG, framework::manager::PatchManager, utils::platform,
+};
 
 mod config;
 mod framework;

@@ -1,0 +1,5 @@
+show_console = false # Attach debug console on startup
+allow_unloading = false # Allow unloading of patches at runtime
+
+[patches]
+disable_camera_smoothing = true

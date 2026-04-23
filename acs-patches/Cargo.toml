@@ -8,18 +8,7 @@ edition = "2024"
 crate-type = ["cdylib"]
 
 [dependencies]
-toml = "0.8"
-serde = { version = "1.0", features = ["derive"] }
-libmem = "5"
-windows = { version = "0.61", features = [
-    "Win32_Foundation",
-    "Win32_Security",
-    "Win32_System_Threading",
-    "Win32_System_SystemServices",
-    "Win32_System_Console",
-    "Win32_UI_WindowsAndMessaging",
-    "Win32_UI_Input_KeyboardAndMouse",
-    "Win32_System_LibraryLoader",
-    "Win32_System_Memory",
-    "Wdk_System_Threading",
-] }
+toml = { workspace = true }
+serde = { workspace = true }
+libmem = { workspace = true }
+windows = { workspace = true }

@@ -1,8 +1,23 @@
 [workspace]
 resolver = "3"
-members = [
-    "acu-patches",
-    "acs-patches",
-    "mesom-patches",
-    "mesow-patches"
-]
+members = ["acu-patches", "acs-patches", "mesom-patches", "mesow-patches"]
+
+[workspace.dependencies]
+tracing = "0.1"
+tracing-subscriber = "0.3"
+enable-ansi-support = "0.3"
+toml = "1"
+serde = { version = "1.0", features = ["derive"] }
+libmem = "5"
+windows = { version = "0.62", features = [
+    "Win32_Foundation",
+    "Win32_Security",
+    "Win32_System_Threading",
+    "Win32_System_SystemServices",
+    "Win32_System_Console",
+    "Win32_UI_WindowsAndMessaging",
+    "Win32_UI_Input_KeyboardAndMouse",
+    "Win32_System_LibraryLoader",
+    "Win32_System_Memory",
+    "Wdk_System_Threading",
+] }

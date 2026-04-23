@@ -1,0 +1,2 @@
+show_console = false # Attach debug console on startup
+suppress_integrity_warning = false # Suppress the warning when integrity checks cannot be disabled

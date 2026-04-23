@@ -1,0 +1,8 @@
+[workspace]
+resolver = "3"
+members = [
+    "acu-patches",
+    "acs-patches",
+    "mesom-patches",
+    "mesow-patches"
+]

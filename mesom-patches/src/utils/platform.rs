@@ -61,14 +61,16 @@ pub fn get_time_date_stamp() -> Option<u32> {
             return None;
         }
 
-        let dos_header = &*(base_address as *const IMAGE_DOS_HEADER);
+        let dos_header_ptr = base_address as *const IMAGE_DOS_HEADER;
+        let dos_header = std::ptr::read_unaligned(dos_header_ptr);
+
         if dos_header.e_magic != IMAGE_DOS_SIGNATURE {
             return None;
         }
 
         let nt_headers_ptr =
             base_address.offset(dos_header.e_lfanew as isize) as *const IMAGE_NT_HEADERS64;
-        let nt_headers = &*nt_headers_ptr;
+        let nt_headers = std::ptr::read_unaligned(nt_headers_ptr);
 
         if nt_headers.Signature != IMAGE_NT_SIGNATURE {
             return None;

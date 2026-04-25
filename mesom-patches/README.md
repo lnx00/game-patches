@@ -1,4 +1,4 @@
-# MESOM Patches
+# MeSoM Patches
 
 Quality-of-life patches for the game "Middle-earth: Shadow of Mordor".
 

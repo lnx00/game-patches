@@ -11,4 +11,4 @@ crate-type = ["cdylib"]
 toml = { workspace = true }
 serde = { workspace = true }
 libmem = { workspace = true }
-windows = { workspace = true }
+windows = { workspace = true, features = ["Win32_System_Memory"] }

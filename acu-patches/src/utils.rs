@@ -1,12 +1,14 @@
-pub fn patch_bytes(address: usize, bytes: &[u8]) -> Result<(), String> {
+pub mod platform;
+
+pub unsafe fn patch_bytes(address: usize, bytes: &[u8]) -> Result<(), String> {
     unsafe {
-        let old_protect = libmem::prot_memory(address, 0, libmem::Prot::XRW)
+        let old_protect = libmem::prot_memory(address, bytes.len(), libmem::Prot::XRW)
             .ok_or("failed to change protection")?;
 
         libmem::write_memory(address, bytes);
 
-        libmem::prot_memory(address, 0, old_protect).ok_or("failed to restore protection")?;
-    }
+        libmem::prot_memory(address, bytes.len(), old_protect).ok_or("failed to restore protection")?;
 
-    Ok(())
+        Ok(())
+    }
 }

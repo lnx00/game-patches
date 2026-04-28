@@ -14,11 +14,14 @@ dependencies = [
 
 [[package]]
 name = "acu-patches"
-version = "0.3.2"
+version = "0.4.0"
 dependencies = [
+ "enable-ansi-support",
  "libmem",
  "serde",
  "toml",
+ "tracing",
+ "tracing-subscriber",
  "windows",
 ]
 

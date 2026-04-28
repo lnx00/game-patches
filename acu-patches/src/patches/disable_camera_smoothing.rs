@@ -1,8 +1,7 @@
-use std::sync::{LazyLock, Mutex, MutexGuard};
-
-use crate::utils;
-
-use super::Patch;
+use crate::{
+    framework::{byte_patch::BytePatch, patch::Patch},
+    sdk::{GameSdk, offsets::sigs},
+};
 
 /*
     The game already has logic for disabling camera smoothing, but it is usually not possible
@@ -11,41 +10,42 @@ use super::Patch;
 */
 
 pub struct DisableCameraSmoothing {
-    target_address: usize,
-    original_bytes: Box<[u8; 2]>,
+    byte_patch: BytePatch<2>,
 }
 
-static INSTANCE: LazyLock<Mutex<DisableCameraSmoothing>> = LazyLock::new(|| {
-    let game_module = libmem::find_module("ACU.exe").unwrap();
-    let target_address = unsafe {
-        libmem::sig_scan("74 ? 41 8B 06 41 89 85", game_module.base, game_module.size)
-            .ok_or("signature not found")
-            .unwrap()
-    };
-
-    let original_bytes = unsafe { libmem::read_memory::<_>(target_address) };
-
-    Mutex::new(DisableCameraSmoothing {
-        target_address,
-        original_bytes: Box::new(original_bytes),
-    })
-});
-
 impl Patch for DisableCameraSmoothing {
-    fn inst() -> MutexGuard<'static, Self> {
-        INSTANCE.lock().unwrap()
+    fn name() -> &'static str
+    where
+        Self: Sized,
+    {
+        "Disable Mouse Smoothing"
+    }
+
+    fn config_key(&self) -> Option<&'static str> {
+        Some("disable_camera_smoothing")
+    }
+
+    fn init() -> Result<Box<dyn Patch>, String>
+    where
+        Self: Sized,
+    {
+        let target_address = GameSdk::inst().find_sig(sigs::JUMP_CAMERA_SMOOTHING)?;
+
+        let patch_bytes: [u8; _] = [
+            0x90, 0x90, // nop nop
+        ];
+
+        let byte_patch = BytePatch::new(target_address, patch_bytes);
+        Ok(Box::new(Self { byte_patch }))
     }
 
     fn apply(&mut self) -> Result<(), String> {
-        let patch_bytes: [u8; 2] = [0x90, 0x90];
-        utils::patch_bytes(self.target_address, &patch_bytes)?;
-
+        self.byte_patch.apply()?;
         Ok(())
     }
 
     fn revert(&mut self) -> Result<(), String> {
-        utils::patch_bytes(self.target_address, self.original_bytes.as_slice())?;
-
+        self.byte_patch.revert()?;
         Ok(())
     }
 }

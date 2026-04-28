@@ -2,7 +2,12 @@ use std::{
     convert::TryFrom,
     ffi::c_void,
     ops::Range,
-    sync::{LazyLock, Mutex, MutexGuard},
+    sync::{
+        LazyLock, Mutex, MutexGuard,
+        atomic::{AtomicBool, Ordering},
+    },
+    thread,
+    time::Duration,
 };
 
 use windows::{
@@ -19,6 +24,12 @@ use windows::{
     core::{PCSTR, s},
 };
 
+#[cfg(target_pointer_width = "64")]
+use windows::Win32::System::Diagnostics::Debug::IMAGE_NT_HEADERS64 as IMAGE_NT_HEADERS;
+
+#[cfg(target_pointer_width = "32")]
+use windows::Win32::System::Diagnostics::Debug::IMAGE_NT_HEADERS32 as IMAGE_NT_HEADERS;
+
 type CreateThreadFn = unsafe extern "system" fn(
     lp_thread_attributes: *mut c_void,
     dw_stack_size: usize,
@@ -27,12 +38,6 @@ type CreateThreadFn = unsafe extern "system" fn(
     dw_creation_flags: u32,
     lp_thread_id: *mut u32,
 ) -> HANDLE;
-
-#[cfg(target_pointer_width = "64")]
-use windows::Win32::System::Diagnostics::Debug::IMAGE_NT_HEADERS64 as IMAGE_NT_HEADERS;
-
-#[cfg(target_pointer_width = "32")]
-use windows::Win32::System::Diagnostics::Debug::IMAGE_NT_HEADERS32 as IMAGE_NT_HEADERS;
 
 pub fn find_section_address_range(section_name: &str) -> Option<Range<usize>> {
     let mut target_name_bytes = [0u8; 8];
@@ -89,14 +94,13 @@ pub fn find_section_address_range(section_name: &str) -> Option<Range<usize>> {
     None
 }
 
-static INTEGRITY_SECTION_RANGE: LazyLock<Option<(usize, usize)>> = LazyLock::new(|| {
-    let target = find_section_address_range(".UBX0")?;
-    println!("found section @ {} - {}", target.start, target.end);
-    return Some((target.start, target.end));
-});
+static INTEGRITY_SECTION_RANGE: LazyLock<Option<Range<usize>>> =
+    LazyLock::new(|| find_section_address_range(".UBX0"));
+
+static INTEGRITY_THREAD_FOUND: AtomicBool = AtomicBool::new(false);
 
 /// Extract the jump target address
-fn jump_target_address(inst: &libmem::Inst) -> Option<usize> {
+fn extract_jmp_target(inst: &libmem::Inst) -> Option<usize> {
     let next_address = inst.address as i64 + inst.bytes.len() as i64;
 
     let target = match inst.bytes.as_slice() {
@@ -117,25 +121,27 @@ fn jump_target_address(inst: &libmem::Inst) -> Option<usize> {
 /// Analyzes the thread start code and checks if it is the integrity thread
 fn analyze_thread_start(start_address: usize) -> Option<bool> {
     unsafe {
-        println!("analyzing thread {:X}...", start_address);
+        tracing::debug!("analyzing thread {:X}...", start_address);
 
-        let section_range = (*INTEGRITY_SECTION_RANGE)?;
-        println!("- section range: {}, {}", section_range.0, section_range.1);
+        if let Some(section_range) = INTEGRITY_SECTION_RANGE.as_ref() {
+            let inst = libmem::disassemble(start_address)?;
 
-        let inst = libmem::disassemble(start_address)?;
+            if inst.mnemonic.to_lowercase() != "jmp" {
+                tracing::debug!("first inst was not a jump");
+                return Some(false);
+            }
 
-        if inst.mnemonic.to_lowercase() != "jmp" {
-            println!("- first inst was not a jump");
-            return Some(false);
+            let target_addr = extract_jmp_target(&inst)?;
+            tracing::debug!("jmp target addr: {}", target_addr);
+
+            let in_range = section_range.contains(&target_addr);
+
+            tracing::debug!("verdict for thread {:X}: {}", start_address, in_range);
+
+            return Some(in_range);
         }
 
-        let target_addr = jump_target_address(&inst)?;
-        println!("- jmp target addr: {}", target_addr);
-
-        let in_range = target_addr >= section_range.0 && target_addr <= section_range.1;
-        println!("verdict for thread {:X}: {}", start_address, in_range);
-
-        return Some(in_range);
+        None
     }
 }
 
@@ -175,6 +181,7 @@ fn check_thread(thread_id: u32) -> Result<bool, String> {
 pub fn terminate_integrity_checks() -> Result<(), String> {
     let process_id = libmem::get_process().unwrap().pid;
     let thread_list = libmem::enum_threads().ok_or("failed to enumerate threads")?;
+    let mut terminated_any = false;
 
     // Check all thread of the current process
     for thread in thread_list {
@@ -182,11 +189,12 @@ pub fn terminate_integrity_checks() -> Result<(), String> {
             let check_result = check_thread(thread.tid);
             match check_result {
                 Ok(true) => {
-                    println!("Terminated integrity check thread {}", thread.tid);
+                    tracing::info!("terminated integrity check thread: {:X}", thread.tid);
+                    terminated_any = true;
                 }
 
                 Err(e) => {
-                    eprintln!("Error checking thread {}: {}", thread.tid, e);
+                    tracing::warn!("cannot check thread {:X}: {}", thread.tid, e);
                 }
 
                 _ => {}
@@ -194,7 +202,56 @@ pub fn terminate_integrity_checks() -> Result<(), String> {
         }
     }
 
+    if !terminated_any {
+        return Err("no integrity check threads were terminated".to_string());
+    }
+
     Ok(())
+}
+
+pub fn wait_until_safe(timeout: Duration) -> bool {
+    INTEGRITY_THREAD_FOUND.store(false, Ordering::SeqCst);
+
+    // Install CreateThread hook
+    tracing::info!("installing CreateThread hook...");
+    if let Err(e) = IntegrityHook::inst().apply() {
+        tracing::error!("failed to install integrity hook: {}", e);
+    }
+
+    // Try to terminate thread if its already running
+    tracing::info!("terminating integrity checks...");
+    match terminate_integrity_checks() {
+        Ok(_) => {
+            if let Err(e) = IntegrityHook::inst().cleanup() {
+                tracing::error!("failed to uninstall integrity hook: {}", e);
+            }
+        }
+        Err(e) => tracing::warn!("failed to terminate integrity checks: {}", e),
+    }
+
+    let start = std::time::Instant::now();
+
+    // Wait until the thread was killed...
+    tracing::info!("waiting for integrity check thread...");
+    while !INTEGRITY_THREAD_FOUND.load(Ordering::SeqCst) {
+        if start.elapsed() >= timeout {
+            if let Err(e) = IntegrityHook::inst().cleanup() {
+                tracing::error!("failed to uninstall integrity hook: {}", e);
+            }
+
+            return false;
+        }
+
+        thread::sleep(Duration::from_millis(10));
+    }
+
+    // Uninstall CreateThread hook
+    if let Err(e) = IntegrityHook::inst().cleanup() {
+        tracing::error!("failed to uninstall integrity hook: {}", e);
+        return false;
+    }
+
+    true
 }
 
 pub struct IntegrityHook {
@@ -264,8 +321,9 @@ impl IntegrityHook {
         let mut lp_start_address = lp_start_address;
 
         if analyze_thread_start(lp_start_address as usize) == Some(true) {
+            INTEGRITY_THREAD_FOUND.store(true, Ordering::SeqCst);
             lp_start_address = Self::empty_thread as *mut c_void;
-            println!("CreateThread: prevented integrity check thread creation");
+            tracing::info!("CreateThread: prevented integrity check thread creation");
         }
 
         return unsafe {

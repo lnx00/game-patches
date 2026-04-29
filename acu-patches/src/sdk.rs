@@ -62,6 +62,7 @@ impl GameSdk {
 pub fn wait_for_game(timeout: Duration) -> Result<(), String> {
     let start = std::time::Instant::now();
 
+    // Wait for game module
     while libmem::find_module(GAME_MODULE_NAME).is_none() {
         if start.elapsed() >= timeout {
             return Err("timeout while waiting for game".to_string());
@@ -70,6 +71,7 @@ pub fn wait_for_game(timeout: Duration) -> Result<(), String> {
         thread::sleep(std::time::Duration::from_millis(100));
     }
 
+    // Wait for integrity checks
     if !integrity::wait_until_safe(timeout) {
         tracing::warn!(
             "failed to kill integrity checks! continuing in 3 second, but the game will most likely crash..."
@@ -78,6 +80,11 @@ pub fn wait_for_game(timeout: Duration) -> Result<(), String> {
     }
 
     Ok(())
+}
+
+pub fn cleanup() -> Result<(), String> {
+    tracing::info!("uninstalling integrity hook...");
+    integrity::IntegrityHook::inst().cleanup()
 }
 
 pub fn check_game_version() -> Result<u32, String> {

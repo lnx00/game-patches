@@ -178,7 +178,9 @@ fn check_thread(thread_id: u32) -> Result<bool, String> {
     Ok(false)
 }
 
-pub fn terminate_integrity_checks() -> Result<(), String> {
+/// Searches for the integrity check thread and tries to terminate it.
+/// Returns Ok(true), if at least one thread has been successfully terminated.
+pub fn terminate_integrity_checks() -> Result<bool, String> {
     let process_id = libmem::get_process().unwrap().pid;
     let thread_list = libmem::enum_threads().ok_or("failed to enumerate threads")?;
     let mut terminated_any = false;
@@ -202,53 +204,36 @@ pub fn terminate_integrity_checks() -> Result<(), String> {
         }
     }
 
-    if !terminated_any {
-        return Err("no integrity check threads were terminated".to_string());
-    }
-
-    Ok(())
+    Ok(terminated_any)
 }
 
 pub fn wait_until_safe(timeout: Duration) -> bool {
     INTEGRITY_THREAD_FOUND.store(false, Ordering::SeqCst);
 
-    // Install CreateThread hook
+    // Install hook
     tracing::info!("installing CreateThread hook...");
     if let Err(e) = IntegrityHook::inst().apply() {
         tracing::error!("failed to install integrity hook: {}", e);
     }
 
-    // Try to terminate thread if its already running
+    // Terminate running threads
     tracing::info!("terminating integrity checks...");
     match terminate_integrity_checks() {
-        Ok(_) => {
-            if let Err(e) = IntegrityHook::inst().cleanup() {
-                tracing::error!("failed to uninstall integrity hook: {}", e);
-            }
-        }
-        Err(e) => tracing::warn!("failed to terminate integrity checks: {}", e),
+        Ok(true) => return true,
+        Ok(false) => tracing::info!("no integrity check thread found"),
+        Err(e) => tracing::info!("failed to terminate integrity thread: {}", e),
     }
 
     let start = std::time::Instant::now();
 
     // Wait until the thread was killed...
-    tracing::info!("waiting for integrity check thread...");
+    tracing::info!("waiting for new integrity check thread...");
     while !INTEGRITY_THREAD_FOUND.load(Ordering::SeqCst) {
         if start.elapsed() >= timeout {
-            if let Err(e) = IntegrityHook::inst().cleanup() {
-                tracing::error!("failed to uninstall integrity hook: {}", e);
-            }
-
             return false;
         }
 
         thread::sleep(Duration::from_millis(10));
-    }
-
-    // Uninstall CreateThread hook
-    if let Err(e) = IntegrityHook::inst().cleanup() {
-        tracing::error!("failed to uninstall integrity hook: {}", e);
-        return false;
     }
 
     true

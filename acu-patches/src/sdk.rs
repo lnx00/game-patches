@@ -6,6 +6,7 @@ use crate::utils::platform;
 
 pub mod integrity;
 pub mod offsets;
+pub mod structs;
 
 const GAME_MODULE_NAME: &str = "ACU.exe";
 const GAME_BINARY_TIMESTAMP: u32 = 0x54DB5826;

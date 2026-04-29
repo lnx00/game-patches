@@ -1,6 +1,5 @@
 use std::{arch::x86_64::__m128, ffi::c_void, sync::OnceLock};
 
-
 use crate::{
     framework::patch::Patch,
     sdk::{offsets::offsets, structs::structs},
@@ -50,21 +49,25 @@ impl MouseSensitivityFix {
         a9: f32,
     ) -> __m128 {
         unsafe {
-            let g_root_clock = &**(offsets::ROOT_CLOCK_ADDRESS as *mut *mut structs::Clock);
-            let frame_delta_time = g_root_clock.delta_time;
+            let new_factor = (offsets::ROOT_CLOCK_ADDRESS as *mut *mut structs::Clock)
+                .as_ref()
+                .and_then(|clock_ptr_ptr| (*clock_ptr_ptr).as_ref())
+                .and_then(|clock| {
+                    let frame_delta_time = clock.delta_time;
+                    if frame_delta_time > f32::EPSILON {
+                        Some(REFERENCE_FRAME_TIME / frame_delta_time)
+                    } else {
+                        None
+                    }
+                })
+                .unwrap_or(1.0);
 
-            let new_factor = REFERENCE_FRAME_TIME / frame_delta_time;
-
-            /*println!(
-                "frame delta time: {}, sensitivity factor: {}",
-                frame_delta_time, new_factor
-            );*/
-
-            let original = ORIG_AXIS_MOVEMENT
-                .get()
-                .expect("AxisMovement hook was called but original function is not set");
-
-            original(a1, a2, a3, a4, a5, a6, invert_factor * new_factor, a8, a9)
+            match ORIG_AXIS_MOVEMENT.get() {
+                Some(original) => {
+                    original(a1, a2, a3, a4, a5, a6, invert_factor * new_factor, a8, a9)
+                }
+                None => std::mem::zeroed(),
+            }
         }
     }
 }

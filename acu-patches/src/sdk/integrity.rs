@@ -4,7 +4,7 @@ use std::{
     ffi::c_void,
     ops::Range,
     sync::{
-        LazyLock, Mutex, MutexGuard,
+        LazyLock, Mutex, MutexGuard, OnceLock, RwLock,
         atomic::{AtomicBool, Ordering},
     },
     thread,
@@ -14,7 +14,7 @@ use std::{
 use windows::{
     Wdk::System::Threading::{NtQueryInformationThread, ThreadQuerySetWin32StartAddress},
     Win32::{
-        Foundation::HANDLE,
+        Foundation::{CloseHandle, HANDLE},
         System::{
             Diagnostics::Debug::{IMAGE_FILE_HEADER, IMAGE_SECTION_HEADER},
             LibraryLoader::{GetModuleHandleA, GetProcAddress},
@@ -39,6 +39,8 @@ type CreateThreadFn = unsafe extern "system" fn(
     dw_creation_flags: u32,
     lp_thread_id: *mut u32,
 ) -> HANDLE;
+
+static ORIG_CREATE_THREAD: OnceLock<CreateThreadFn> = OnceLock::new();
 
 pub fn find_section_address_range(section_name: &str) -> Option<Range<usize>> {
     let mut target_name_bytes = [0u8; 8];
@@ -98,8 +100,8 @@ pub fn find_section_address_range(section_name: &str) -> Option<Range<usize>> {
 static INTEGRITY_SECTION_RANGE: LazyLock<Option<Range<usize>>> =
     LazyLock::new(|| find_section_address_range(".UBX0"));
 
-static INTEGRITY_THREAD_VERDICTS: LazyLock<Mutex<HashMap<usize, bool>>> =
-    LazyLock::new(|| Mutex::new(HashMap::new()));
+static INTEGRITY_THREAD_VERDICTS: LazyLock<RwLock<HashMap<usize, bool>>> =
+    LazyLock::new(|| RwLock::new(HashMap::new()));
 
 static INTEGRITY_THREAD_FOUND: AtomicBool = AtomicBool::new(false);
 
@@ -127,8 +129,9 @@ fn analyze_thread_start(start_address: usize) -> Option<bool> {
     unsafe {
         tracing::debug!("analyzing thread {:X}...", start_address);
 
+        // Try to get cached verdict with read lock
         if let Some(verdict) = INTEGRITY_THREAD_VERDICTS
-            .lock()
+            .read()
             .unwrap()
             .get(&start_address)
             .copied()
@@ -143,7 +146,7 @@ fn analyze_thread_start(start_address: usize) -> Option<bool> {
             if inst.mnemonic.to_lowercase() != "jmp" {
                 tracing::debug!("first inst was not a jump");
                 INTEGRITY_THREAD_VERDICTS
-                    .lock()
+                    .write()
                     .unwrap()
                     .insert(start_address, false);
                 return Some(false);
@@ -155,7 +158,7 @@ fn analyze_thread_start(start_address: usize) -> Option<bool> {
             let in_range = section_range.contains(&target_addr);
 
             INTEGRITY_THREAD_VERDICTS
-                .lock()
+                .write()
                 .unwrap()
                 .insert(start_address, in_range);
 
@@ -186,19 +189,22 @@ fn check_thread(thread_id: u32) -> Result<bool, String> {
         );
 
         if nt_status.is_err() {
+            let _ = CloseHandle(thread_handle);
             return Err(format!(
                 "failed to query thread information: {:?}",
                 nt_status
             ));
         }
 
-        if analyze_thread_start(thread_start_address) == Some(true) {
-            TerminateThread(thread_handle, 0x0).map_err(|_| "failed to terminate thread")?;
-            return Ok(true);
+        let is_integrity_thread = analyze_thread_start(thread_start_address) == Some(true);
+        if is_integrity_thread {
+            let _ = TerminateThread(thread_handle, 0x0);
+            tracing::debug!("terminated integrity check thread: {:X}", thread_id);
         }
-    }
 
-    Ok(false)
+        let _ = CloseHandle(thread_handle);
+        Ok(is_integrity_thread)
+    }
 }
 
 /// Searches for the integrity check thread and tries to terminate it.
@@ -243,7 +249,7 @@ pub fn wait_until_safe(timeout: Duration) -> bool {
     tracing::info!("terminating integrity checks...");
     match terminate_integrity_checks() {
         Ok(true) => return true,
-        Ok(false) => tracing::info!("no integrity check thread found"),
+        Ok(false) => tracing::info!("no active integrity check threads found"),
         Err(e) => tracing::info!("failed to terminate integrity thread: {}", e),
     }
 
@@ -263,23 +269,19 @@ pub fn wait_until_safe(timeout: Duration) -> bool {
 }
 
 pub struct IntegrityHook {
-    original_func: Option<CreateThreadFn>,
     trampoline: Option<libmem::Trampoline>,
-
     target_address: usize,
 }
 
 static INSTANCE: LazyLock<Mutex<IntegrityHook>> = LazyLock::new(|| {
     // Get the address of kernel32::CreateThread
     let kernel32_handle = unsafe { GetModuleHandleA(s!("kernel32.dll")).unwrap() };
-
     let fp_create_thread = unsafe { GetProcAddress(kernel32_handle, s!("CreateThread")).unwrap() };
 
     // Hook the CreateThread function
     let create_thread_address = fp_create_thread as *mut c_void as usize;
 
     Mutex::new(IntegrityHook {
-        original_func: None,
         trampoline: None,
         target_address: create_thread_address,
     })
@@ -297,7 +299,7 @@ impl IntegrityHook {
             let trampoline = libmem::hook_code(self.target_address, hook_address)
                 .ok_or("failed to hook CreateThread")?;
 
-            self.original_func = trampoline.callable();
+            let _ = ORIG_CREATE_THREAD.set(trampoline.callable::<CreateThreadFn>());
             self.trampoline = Some(trampoline);
         }
 
@@ -334,8 +336,12 @@ impl IntegrityHook {
             tracing::info!("CreateThread: prevented integrity check thread creation");
         }
 
+        let original = ORIG_CREATE_THREAD
+            .get()
+            .expect("CreateThread hook called but original function is not set");
+
         return unsafe {
-            Self::inst().original_func.unwrap()(
+            original(
                 lp_thread_attributes,
                 dw_stack_size,
                 lp_start_address,

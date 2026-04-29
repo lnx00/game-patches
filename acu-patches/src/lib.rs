@@ -81,7 +81,7 @@ fn run() -> Result<(), String> {
 
 fn main_thread() {
     // Initialize logger
-    tracing_subscriber::fmt().with_max_level(tracing::Level::DEBUG).pretty().init();
+    tracing_subscriber::fmt().pretty().init();
 
     // Attach console window
     if CONFIG.show_console {

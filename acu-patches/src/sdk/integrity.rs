@@ -1,4 +1,5 @@
 use std::{
+    collections::HashMap,
     convert::TryFrom,
     ffi::c_void,
     ops::Range,
@@ -97,6 +98,9 @@ pub fn find_section_address_range(section_name: &str) -> Option<Range<usize>> {
 static INTEGRITY_SECTION_RANGE: LazyLock<Option<Range<usize>>> =
     LazyLock::new(|| find_section_address_range(".UBX0"));
 
+static INTEGRITY_THREAD_VERDICTS: LazyLock<Mutex<HashMap<usize, bool>>> =
+    LazyLock::new(|| Mutex::new(HashMap::new()));
+
 static INTEGRITY_THREAD_FOUND: AtomicBool = AtomicBool::new(false);
 
 /// Extract the jump target address
@@ -123,11 +127,25 @@ fn analyze_thread_start(start_address: usize) -> Option<bool> {
     unsafe {
         tracing::debug!("analyzing thread {:X}...", start_address);
 
+        if let Some(verdict) = INTEGRITY_THREAD_VERDICTS
+            .lock()
+            .unwrap()
+            .get(&start_address)
+            .copied()
+        {
+            tracing::debug!("cached verdict for thread {:X}: {}", start_address, verdict);
+            return Some(verdict);
+        }
+
         if let Some(section_range) = INTEGRITY_SECTION_RANGE.as_ref() {
             let inst = libmem::disassemble(start_address)?;
 
             if inst.mnemonic.to_lowercase() != "jmp" {
                 tracing::debug!("first inst was not a jump");
+                INTEGRITY_THREAD_VERDICTS
+                    .lock()
+                    .unwrap()
+                    .insert(start_address, false);
                 return Some(false);
             }
 
@@ -135,6 +153,11 @@ fn analyze_thread_start(start_address: usize) -> Option<bool> {
             tracing::debug!("jmp target addr: {}", target_addr);
 
             let in_range = section_range.contains(&target_addr);
+
+            INTEGRITY_THREAD_VERDICTS
+                .lock()
+                .unwrap()
+                .insert(start_address, in_range);
 
             tracing::debug!("verdict for thread {:X}: {}", start_address, in_range);
 

@@ -24,7 +24,7 @@ impl<const N: usize> BytePatch<N> {
 
         unsafe {
             self.original_bytes = libmem::read_memory::<_>(self.address);
-            utils::patch_bytes(self.address, &self.patch_bytes)?;
+            utils::patch_bytes_nt(self.address, &self.patch_bytes)?;
         }
 
         self.is_applied = true;
@@ -37,7 +37,7 @@ impl<const N: usize> BytePatch<N> {
         }
 
         unsafe {
-            utils::patch_bytes(self.address, &self.original_bytes)?;
+            utils::patch_bytes_nt(self.address, &self.original_bytes)?;
         }
 
         self.is_applied = false;

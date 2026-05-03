@@ -1,2 +1,5 @@
 show_console = false # Attach debug console on startup
-suppress_integrity_warning = false # Suppress the warning when integrity checks cannot be disabled
+allow_unloading = false # Allow unloading of patches at runtime
+
+[patches]
+disable_camera_smoothing = true

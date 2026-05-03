@@ -1,6 +1,6 @@
 [package]
 name = "acs-patches"
-version = "0.1.2"
+version = "0.2.0"
 authors = ["lnx00"]
 edition = "2024"
 
@@ -8,6 +8,9 @@ edition = "2024"
 crate-type = ["cdylib"]
 
 [dependencies]
+tracing = { workspace = true }
+tracing-subscriber = { workspace = true }
+enable-ansi-support = { workspace = true }
 toml = { workspace = true }
 serde = { workspace = true }
 libmem = { workspace = true }

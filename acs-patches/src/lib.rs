@@ -1,94 +1,115 @@
-use config::Config;
-use std::thread;
+use std::{sync::RwLock, thread};
 use windows::Win32::{
-    Foundation::{HINSTANCE, HMODULE},
+    Foundation::HINSTANCE,
     System::{
-        LibraryLoader::FreeLibraryAndExitThread,
+        LibraryLoader::DisableThreadLibraryCalls,
         SystemServices::{DLL_PROCESS_ATTACH, DLL_PROCESS_DETACH},
     },
 };
 
+use crate::{config::CONFIG, framework::manager::PatchManager, utils::platform};
+
 mod config;
-mod game;
+mod framework;
 mod patches;
-mod platform;
+mod sdk;
 mod utils;
 
-struct SendWrapper<T>(T);
-unsafe impl<T> Send for SendWrapper<T> {}
-
-const PKG_VERSION: Option<&str> = option_env!("CARGO_PKG_VERSION");
+const PKG_NAME: &str = env!("CARGO_PKG_NAME");
+const PKG_VERSION: &str = env!("CARGO_PKG_VERSION");
+const PKG_AUTHORS: &str = env!("CARGO_PKG_AUTHORS");
 
 const VK_F11: i32 = 0x7A;
 
-fn run(config: &Config) -> Result<(), String> {
-    println!("Disabling integrity checks...");
-    game::disable_integrity_checks()?;
+static PATCH_MANAGER: RwLock<Option<PatchManager>> = RwLock::new(None);
 
-    println!("Integrity checks patched! Waiting for the game...");
-    if !game::wait_for_game(15) {
-        println!("Timeout while waiting for the game! Trying to apply patches anyways...");
+/// Tries to clean everything up for safe unloading
+fn cleanup() {
+    tracing::info!("reverting patches...");
+    if let Some(mut pm) = PATCH_MANAGER.write().unwrap().take() {
+        pm.revert_all();
+    }
 
-        if !config.suppress_integrity_warning {
-            platform::msg_box(
-                "Timeout while waiting for the game's integrity checks! The patch will try to continue, but the game might crash.",
-                "ACS Patches",
-                platform::MsgBoxType::Warning,
-            );
+    tracing::info!("cleaning up sdk...");
+    if let Err(e) = sdk::cleanup() {
+        tracing::error!("failed to cleanup sdk: {}", e);
+    }
+
+    tracing::info!("cleanup done!");
+}
+
+/// Initializes and runs all patches.
+/// Might block the caller, if hotkeys are enabled.
+fn run() -> Result<(), String> {
+    sdk::wait_until_ready(std::time::Duration::from_secs(30))?;
+
+    let mut patch_manager = PatchManager::new();
+
+    tracing::info!("initializing patches...");
+    patches::register_all(&mut patch_manager);
+
+    tracing::info!("applying patches...");
+    patch_manager.apply_all();
+
+    *PATCH_MANAGER.write().unwrap() = Some(patch_manager);
+
+    // Wait for unload, if enabled
+    if CONFIG.allow_unloading {
+        tracing::info!("patches ready! press F11 to unload.");
+        while !platform::is_button_down(VK_F11) {
+            thread::sleep(std::time::Duration::from_millis(100));
         }
+
+        tracing::info!("F11 pressed! cleaning up...");
+        cleanup();
     } else {
-        println!("Game ready! Applying patches...");
+        tracing::info!("patches ready!");
     }
-
-    patches::run_all_patches()?;
-
-    println!("All patches applied successfully! Press F11 to unload.");
-    while !platform::is_button_down(VK_F11) {
-        thread::sleep(std::time::Duration::from_millis(100));
-    }
-
-    println!("Unloading patches...");
-    patches::disable_all_patches()?;
-    game::cleanup_integrity_checks()?;
 
     Ok(())
 }
 
-fn main_thread(dll_module: SendWrapper<HINSTANCE>) {
-    let config = Config::read("./plugins/acs_patches.toml").unwrap_or_default();
+fn main_thread() {
+    // Initialize logger
+    tracing_subscriber::fmt().with_max_level(tracing::Level::DEBUG).pretty().init();
 
     // Attach console window
-    if config.show_console {
-        let title = format!("ACS Patches v{} by lnx00", PKG_VERSION.unwrap_or("?.?.?"));
+    if CONFIG.show_console {
+        let title = format!("{} v{} by {}", PKG_NAME, PKG_VERSION, PKG_AUTHORS);
         platform::attach_console(&title);
+        let _ = enable_ansi_support::enable_ansi_support();
+        tracing::info!("running {}", title);
     }
 
     // Run main logic
-    if let Err(e) = run(&config) {
-        eprintln!("Error: {}", e);
+    if let Err(e) = run() {
+        tracing::error!("Error: {}", e);
         platform::msg_box(&e, "Error", platform::MsgBoxType::Error);
     }
 
     // Detach console
-    if config.show_console {
+    if CONFIG.show_console {
         platform::detach_console();
     }
-
-    unsafe { FreeLibraryAndExitThread(HMODULE(dll_module.0.0), 0) };
 }
 
 #[unsafe(no_mangle)]
 #[allow(non_snake_case)]
-extern "system" fn DllMain(dll_module: HINSTANCE, call_reason: u32, _: *mut ()) -> bool {
+extern "system" fn DllMain(dll_module: HINSTANCE, call_reason: u32, reserved: *mut ()) -> bool {
     match call_reason {
         DLL_PROCESS_ATTACH => {
-            let safe_dll_module = SendWrapper(dll_module);
-            thread::spawn(move || {
-                main_thread(safe_dll_module);
-            });
+            unsafe {
+                let _ = DisableThreadLibraryCalls(dll_module.into());
+            }
+            thread::spawn(main_thread);
         }
 
-        DLL_PROCESS_DETACH => (),
+        DLL_PROCESS_DETACH => {
+            if reserved.is_null() {
+                // This isn't good but we need the lock
+                cleanup();
+            }
+        }
 
         _ => (),
     }

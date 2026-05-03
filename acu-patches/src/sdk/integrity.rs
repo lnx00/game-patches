@@ -25,6 +25,8 @@ use windows::{
     core::{PCSTR, s},
 };
 
+use crate::utils::WaitLock;
+
 #[cfg(target_pointer_width = "64")]
 use windows::Win32::System::Diagnostics::Debug::IMAGE_NT_HEADERS64 as IMAGE_NT_HEADERS;
 
@@ -336,9 +338,7 @@ impl IntegrityHook {
             tracing::info!("CreateThread: prevented integrity check thread creation");
         }
 
-        let original = ORIG_CREATE_THREAD
-            .get()
-            .expect("CreateThread hook called but original function is not set");
+        let original = WaitLock::wait(&ORIG_CREATE_THREAD);
 
         return unsafe {
             original(

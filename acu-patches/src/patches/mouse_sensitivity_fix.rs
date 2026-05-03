@@ -3,6 +3,7 @@ use std::{arch::x86_64::__m128, ffi::c_void, sync::OnceLock};
 use crate::{
     framework::patch::Patch,
     sdk::{offsets::offsets, structs::structs},
+    utils::WaitLock,
 };
 
 /*
@@ -62,12 +63,8 @@ impl MouseSensitivityFix {
                 })
                 .unwrap_or(1.0);
 
-            match ORIG_AXIS_MOVEMENT.get() {
-                Some(original) => {
-                    original(a1, a2, a3, a4, a5, a6, invert_factor * new_factor, a8, a9)
-                }
-                None => std::mem::zeroed(),
-            }
+            let original = WaitLock::wait(&ORIG_AXIS_MOVEMENT);
+            original(a1, a2, a3, a4, a5, a6, invert_factor * new_factor, a8, a9)
         }
     }
 }

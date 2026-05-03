@@ -107,12 +107,12 @@ static INTEGRITY_THREAD_VERDICTS: LazyLock<RwLock<HashMap<usize, bool>>> =
 
 static INTEGRITY_THREAD_FOUND: AtomicBool = AtomicBool::new(false);
 
-/// Extract the jump target address
-fn extract_jmp_target(inst: &libmem::Inst) -> Option<usize> {
+/// Extract the relative target address (jmp or call)
+fn extract_relative_target(inst: &libmem::Inst) -> Option<usize> {
     let next_address = inst.address as i64 + inst.bytes.len() as i64;
 
     let target = match inst.bytes.as_slice() {
-        [0xE9, displacement @ ..] if displacement.len() == 4 => {
+        [0xE8 | 0xE9, displacement @ ..] if displacement.len() == 4 => {
             let displacement = i32::from_le_bytes(displacement.try_into().ok()?) as i64;
             next_address.checked_add(displacement)?
         }
@@ -145,8 +145,9 @@ fn analyze_thread_start(start_address: usize) -> Option<bool> {
         if let Some(section_range) = INTEGRITY_SECTION_RANGE.as_ref() {
             let inst = libmem::disassemble(start_address)?;
 
-            if inst.mnemonic.to_lowercase() != "jmp" {
-                tracing::debug!("first inst was not a jump");
+            let mnemonic = inst.mnemonic.to_lowercase();
+            if mnemonic != "jmp" && mnemonic != "call" {
+                tracing::debug!("first inst was not a jump or call");
                 INTEGRITY_THREAD_VERDICTS
                     .write()
                     .unwrap()
@@ -154,8 +155,8 @@ fn analyze_thread_start(start_address: usize) -> Option<bool> {
                 return Some(false);
             }
 
-            let target_addr = extract_jmp_target(&inst)?;
-            tracing::debug!("jmp target addr: {}", target_addr);
+            let target_addr = extract_relative_target(&inst)?;
+            tracing::debug!("target addr of {}: {}", mnemonic, target_addr);
 
             let in_range = section_range.contains(&target_addr);
 

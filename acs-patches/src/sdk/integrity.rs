@@ -156,7 +156,7 @@ fn analyze_thread_start(start_address: usize) -> Option<bool> {
             }
 
             let target_addr = extract_relative_target(&inst)?;
-            tracing::debug!("{} target addr: {}", mnemonic, target_addr);
+            tracing::debug!("target addr of {}: {}", mnemonic, target_addr);
 
             let in_range = section_range.contains(&target_addr);
 

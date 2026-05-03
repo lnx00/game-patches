@@ -33,9 +33,9 @@ impl GameSdk {
 
         let sdk = GameSdk { game_module };
 
-        SDK_INSTANCE
-            .set(sdk)
-            .map_err(|_| "SDK already initialized")?;
+        if SDK_INSTANCE.set(sdk).is_err() {
+            tracing::warn!("SDK already initialized");
+        }
 
         Ok(())
     }
@@ -58,11 +58,12 @@ impl GameSdk {
     }
 }
 
-/// Blocks the caller until the game is ready
-pub fn wait_for_game(timeout: Duration) -> Result<(), String> {
+/// Blocks the caller until the game is fully ready and initialized.
+pub fn wait_until_ready(timeout: Duration) -> Result<(), String> {
     let start = std::time::Instant::now();
 
     // Wait for game module
+    tracing::info!("waiting for game module...");
     while libmem::find_module(GAME_MODULE_NAME).is_none() {
         if start.elapsed() >= timeout {
             return Err("timeout while waiting for game".to_string());
@@ -71,12 +72,24 @@ pub fn wait_for_game(timeout: Duration) -> Result<(), String> {
         thread::sleep(std::time::Duration::from_millis(100));
     }
 
-    // Wait for integrity checks
-    if !integrity::wait_until_safe(timeout) {
+    // Initialize SDK
+    tracing::info!("initializing sdk...");
+    GameSdk::init()?;
+
+    // Check game version
+    tracing::info!("checking game version...");
+    match check_game_version() {
+        Ok(version) => tracing::info!("game version ({:X}) validated", version),
+        Err(e) => tracing::warn!("failed to check game version: {}", e),
+    }
+
+    // Handle integrity checks
+    tracing::info!("waiting for integrity checks...");
+    if let Err(e) = integrity::initialize(timeout - start.elapsed()) {
         tracing::warn!(
-            "failed to kill integrity checks! continuing in 3 second, but the game will most likely crash..."
+            "integrity bypass verification failed: {}. continuing anyway, but the game might crash...",
+            e
         );
-        thread::sleep(std::time::Duration::from_secs(3));
     }
 
     Ok(())

@@ -41,17 +41,7 @@ fn cleanup() {
 /// Initializes and runs all patches.
 /// Might block the caller, if hotkeys are enabled.
 fn run() -> Result<(), String> {
-    tracing::info!("waiting for game...");
-    sdk::wait_for_game(std::time::Duration::from_secs(30))?;
-
-    tracing::info!("checking game version...");
-    match sdk::check_game_version() {
-        Ok(version) => tracing::info!("game version ({:X}) validated", version),
-        Err(e) => tracing::warn!("failed to check game version: {}", e),
-    }
-
-    tracing::info!("initializing sdk...");
-    sdk::GameSdk::init()?;
+    sdk::wait_until_ready(std::time::Duration::from_secs(30))?;
 
     let mut patch_manager = PatchManager::new();
 

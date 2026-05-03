@@ -212,7 +212,9 @@ fn check_thread(thread_id: u32) -> Result<bool, String> {
 /// Searches for the integrity check thread and tries to terminate it.
 /// Returns Ok(true), if at least one thread has been successfully terminated.
 pub fn terminate_integrity_checks() -> Result<bool, String> {
-    let process_id = libmem::get_process().unwrap().pid;
+    let process_id = libmem::get_process()
+        .ok_or("failed to get current process")?
+        .pid;
     let thread_list = libmem::enum_threads().ok_or("failed to enumerate threads")?;
     let mut terminated_any = false;
 
@@ -238,36 +240,31 @@ pub fn terminate_integrity_checks() -> Result<bool, String> {
     Ok(terminated_any)
 }
 
-pub fn wait_until_safe(timeout: Duration) -> bool {
+pub fn initialize(timeout: Duration) -> Result<(), String> {
     INTEGRITY_THREAD_FOUND.store(false, Ordering::SeqCst);
 
     // Install hook
     tracing::info!("installing CreateThread hook...");
-    if let Err(e) = IntegrityHook::inst().apply() {
-        tracing::error!("failed to install integrity hook: {}", e);
-    }
+    IntegrityHook::inst().apply()?;
 
     // Terminate running threads
-    tracing::info!("terminating integrity checks...");
-    match terminate_integrity_checks() {
-        Ok(true) => return true,
-        Ok(false) => tracing::info!("no active integrity check threads found"),
-        Err(e) => tracing::info!("failed to terminate integrity thread: {}", e),
+    tracing::info!("terminating existing integrity checks...");
+    if terminate_integrity_checks()? {
+        return Ok(());
     }
-
-    let start = std::time::Instant::now();
 
     // Wait until the thread was killed...
     tracing::info!("waiting for new integrity check thread...");
+    let start = std::time::Instant::now();
     while !INTEGRITY_THREAD_FOUND.load(Ordering::SeqCst) {
         if start.elapsed() >= timeout {
-            return false;
+            return Err("timeout while waiting for integrity check".to_string());
         }
 
         thread::sleep(Duration::from_millis(10));
     }
 
-    true
+    Ok(())
 }
 
 pub struct IntegrityHook {
@@ -295,6 +292,10 @@ impl IntegrityHook {
     }
 
     pub fn apply(&mut self) -> Result<(), String> {
+        if self.trampoline.is_some() {
+            return Ok(());
+        }
+
         unsafe {
             let hook_address = Self::hk_create_thread as *mut c_void as usize;
 

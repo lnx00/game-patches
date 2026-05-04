@@ -9,7 +9,7 @@ use crate::{
 */
 
 pub struct DisableCameraSmoothing {
-    byte_patch: BytePatch<10>,
+    byte_patch: BytePatch<12>,
 }
 
 impl Patch for DisableCameraSmoothing {
@@ -32,7 +32,7 @@ impl Patch for DisableCameraSmoothing {
 
         let patch_bytes: [u8; _] = [
             0x66, 0x0F, 0xEF, 0xE4, // pxor xmm4, xmm4
-            0x90, 0x90, 0x90, 0x90, 0x90, 0x90, // nop
+            0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90 // nop
         ];
 
         let byte_patch = BytePatch::new(target_address, patch_bytes);

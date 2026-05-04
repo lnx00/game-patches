@@ -6,7 +6,7 @@ use std::{
 
 use windows::{
     Win32::{
-        Foundation::{HANDLE, NTSTATUS},
+        Foundation::{CloseHandle, HANDLE, NTSTATUS},
         System::{
             LibraryLoader::{GetModuleHandleA, GetProcAddress},
             Memory::{PAGE_EXECUTE_READWRITE, PAGE_PROTECTION_FLAGS},
@@ -85,6 +85,7 @@ pub fn patch_bytes_nt(address: usize, bytes: &[u8]) -> Result<(), String> {
         );
 
         if status.is_err() {
+            let _ = CloseHandle(process_handle);
             return Err(format!(
                 "NtProtectVirtualMemory failed with status: {:#X}",
                 status.0
@@ -102,6 +103,8 @@ pub fn patch_bytes_nt(address: usize, bytes: &[u8]) -> Result<(), String> {
             old_protect,
             &mut old_protect,
         );
+
+        let _ = CloseHandle(process_handle);
 
         if status.is_err() {
             return Err(format!(

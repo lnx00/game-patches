@@ -7,13 +7,12 @@ use windows::Win32::{
     },
 };
 
-use crate::{config::CONFIG, framework::manager::PatchManager, utils::platform};
+use framework::{PatchManager, utils::platform};
+use crate::config::CONFIG;
 
 mod config;
-mod framework;
 mod patches;
 mod sdk;
-mod utils;
 
 const PKG_NAME: &str = env!("CARGO_PKG_NAME");
 const PKG_VERSION: &str = env!("CARGO_PKG_VERSION");
@@ -49,7 +48,7 @@ fn run() -> Result<(), String> {
     patches::register_all(&mut patch_manager);
 
     tracing::info!("applying patches...");
-    patch_manager.apply_all();
+    patch_manager.apply_all(&CONFIG);
 
     *PATCH_MANAGER.write().unwrap() = Some(patch_manager);
 

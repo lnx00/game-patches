@@ -7,6 +7,7 @@ name = "acs-patches"
 version = "0.2.0"
 dependencies = [
  "enable-ansi-support",
+ "framework",
  "libmem",
  "serde",
  "toml",
@@ -20,6 +21,7 @@ name = "acu-patches"
 version = "0.4.0"
 dependencies = [
  "enable-ansi-support",
+ "framework",
  "libmem",
  "serde",
  "toml",
@@ -190,6 +192,18 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "cb4cb245038516f5f85277875cdaa4f7d2c9a0fa0468de06ed190163b1581fcf"
 dependencies = [
  "percent-encoding",
+]
+
+[[package]]
+name = "framework"
+version = "0.1.0"
+dependencies = [
+ "enable-ansi-support",
+ "libmem",
+ "serde",
+ "toml",
+ "tracing",
+ "windows",
 ]
 
 [[package]]
@@ -558,6 +572,7 @@ name = "mesom-patches"
 version = "0.2.1"
 dependencies = [
  "enable-ansi-support",
+ "framework",
  "libmem",
  "serde",
  "toml",
@@ -571,6 +586,7 @@ name = "mesow-patches"
 version = "0.1.0"
 dependencies = [
  "enable-ansi-support",
+ "framework",
  "libmem",
  "serde",
  "toml",

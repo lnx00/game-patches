@@ -1,4 +1,4 @@
-use crate::{config::CONFIG, framework::patch::Patch};
+use crate::{config::Config, framework::patch::Patch};
 
 struct ManagedPatch {
     patch: Box<dyn Patch>,
@@ -11,6 +11,7 @@ pub struct PatchManager {
 }
 
 impl PatchManager {
+    #[allow(clippy::new_without_default)]
     pub fn new() -> Self {
         Self {
             patches: Vec::new(),
@@ -34,10 +35,10 @@ impl PatchManager {
         };
     }
 
-    pub fn apply_all(&mut self) {
+    pub fn apply_all(&mut self, config: &Config) {
         for managed in &mut self.patches {
             let enabled = match managed.patch.config_key() {
-                Some(key) => CONFIG.patch_enabled(key),
+                Some(key) => config.patch_enabled(key),
                 None => true,
             };
 

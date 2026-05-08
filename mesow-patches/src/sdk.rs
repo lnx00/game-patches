@@ -2,7 +2,7 @@ use std::{sync::OnceLock, thread, time::Duration};
 
 use libmem::Module;
 
-use crate::utils::platform;
+use framework::utils::platform;
 
 pub mod offsets;
 
@@ -56,10 +56,12 @@ impl GameSdk {
     }
 }
 
-/// Blocks the caller until the game is ready
-pub fn wait_for_game(timeout: Duration) -> Result<(), String> {
+/// Blocks the caller until the game is fully ready and initialized.
+pub fn wait_until_ready(timeout: Duration) -> Result<(), String> {
     let start = std::time::Instant::now();
 
+    // Wait for game module
+    tracing::info!("waiting for game module...");
     while libmem::find_module(GAME_MODULE_NAME).is_none() {
         if start.elapsed() >= timeout {
             return Err("timeout while waiting for game".to_string());
@@ -68,7 +70,24 @@ pub fn wait_for_game(timeout: Duration) -> Result<(), String> {
         thread::sleep(std::time::Duration::from_millis(100));
     }
 
+    // Additional wait for Shadow of War
     thread::sleep(std::time::Duration::from_secs(3));
+
+    // Initialize SDK
+    tracing::info!("initializing sdk...");
+    GameSdk::init()?;
+
+    // Check game version
+    tracing::info!("checking game version...");
+    match check_game_version() {
+        Ok(version) => tracing::info!("game version ({:X}) validated", version),
+        Err(e) => tracing::warn!("failed to check game version: {}", e),
+    }
+
+    Ok(())
+}
+
+pub fn cleanup() -> Result<(), String> {
     Ok(())
 }
 

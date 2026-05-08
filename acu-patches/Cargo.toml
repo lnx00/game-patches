@@ -8,6 +8,7 @@ edition = "2024"
 crate-type = ["cdylib"]
 
 [dependencies]
+framework = { path = "../framework" }
 tracing = { workspace = true }
 tracing-subscriber = { workspace = true }
 enable-ansi-support = { workspace = true }

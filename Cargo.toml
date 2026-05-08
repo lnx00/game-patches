@@ -1,6 +1,6 @@
 [workspace]
 resolver = "3"
-members = ["acu-patches", "acs-patches", "mesom-patches", "mesow-patches"]
+members = ["acu-patches", "acs-patches", "mesom-patches", "mesow-patches", "framework"]
 
 [workspace.dependencies]
 tracing = "0.1"

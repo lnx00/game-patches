@@ -1,7 +1,5 @@
-use crate::{
-    framework::{byte_patch::BytePatch, patch::Patch},
-    sdk::{GameSdk, offsets::sigs},
-};
+use framework::{BytePatch, Patch};
+use crate::sdk::{GameSdk, offsets::sigs};
 
 /*
     We can disable mouse smoothing by setting the registers holding

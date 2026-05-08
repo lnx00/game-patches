@@ -1,0 +1,119 @@
+pub mod platform;
+
+use std::{
+    ffi::c_void,
+    sync::{LazyLock, OnceLock},
+};
+
+use windows::{
+    Win32::{
+        Foundation::{CloseHandle, HANDLE, NTSTATUS},
+        System::{
+            LibraryLoader::{GetModuleHandleA, GetProcAddress},
+            Memory::{PAGE_EXECUTE_READWRITE, PAGE_PROTECTION_FLAGS},
+            Threading::{GetCurrentProcessId, OpenProcess, PROCESS_VM_OPERATION},
+        },
+    },
+    core::s,
+};
+
+type NtProtectVirtualMemoryFn = unsafe extern "system" fn(
+    process_handle: HANDLE,
+    base_address: *mut *mut c_void,
+    region_size: *mut usize,
+    new_protect: PAGE_PROTECTION_FLAGS,
+    old_protect: *mut PAGE_PROTECTION_FLAGS,
+) -> NTSTATUS;
+
+static NT_PROTECT_VIRTUAL_MEMORY: LazyLock<NtProtectVirtualMemoryFn> = LazyLock::new(|| unsafe {
+    let ntdll = GetModuleHandleA(s!("ntdll.dll")).unwrap();
+
+    let fn_ptr = GetProcAddress(ntdll, s!("NtProtectVirtualMemory")).unwrap();
+    let func: NtProtectVirtualMemoryFn = std::mem::transmute(fn_ptr);
+
+    func
+});
+
+pub trait WaitLock<T> {
+    fn wait(&self) -> T;
+}
+
+impl<T: Copy> WaitLock<T> for OnceLock<T> {
+    fn wait(&self) -> T {
+        loop {
+            if let Some(val) = self.get() {
+                return *val;
+            }
+            std::hint::spin_loop();
+        }
+    }
+}
+
+pub unsafe fn patch_bytes(address: usize, bytes: &[u8]) -> Result<(), String> {
+    unsafe {
+        let old_protect = libmem::prot_memory(address, bytes.len(), libmem::Prot::XRW)
+            .ok_or("failed to change protection")?;
+
+        libmem::write_memory(address, bytes);
+
+        libmem::prot_memory(address, bytes.len(), old_protect)
+            .ok_or("failed to restore protection")?;
+
+        Ok(())
+    }
+}
+
+/// Patches the given bytes.
+/// Uses NtProtectVirtualMemory instead of VirtualProtect to bypass some anti-tamper checks.
+pub fn patch_bytes_nt(address: usize, bytes: &[u8]) -> Result<(), String> {
+    unsafe {
+        // Open handle with proper access privileges
+        let process_id = GetCurrentProcessId();
+        let process_handle = OpenProcess(PROCESS_VM_OPERATION, false, process_id)
+            .expect("failed to open process handle");
+
+        let mut base_address = address as *mut c_void;
+        let mut size = bytes.len();
+        let mut old_protect = PAGE_PROTECTION_FLAGS(0);
+
+        // Change protection to RWX
+        let status = NT_PROTECT_VIRTUAL_MEMORY(
+            process_handle,
+            &mut base_address,
+            &mut size,
+            PAGE_EXECUTE_READWRITE,
+            &mut old_protect,
+        );
+
+        if status.is_err() {
+            let _ = CloseHandle(process_handle);
+            return Err(format!(
+                "NtProtectVirtualMemory failed with status: {:#X}",
+                status.0
+            ));
+        }
+
+        // Write the bytes
+        libmem::write_memory(address, bytes);
+
+        // Restore previous protection
+        let status = NT_PROTECT_VIRTUAL_MEMORY(
+            process_handle,
+            &mut base_address,
+            &mut size,
+            old_protect,
+            &mut old_protect,
+        );
+
+        let _ = CloseHandle(process_handle);
+
+        if status.is_err() {
+            return Err(format!(
+                "NtProtectVirtualMemory failed with status: {:#X}",
+                status.0
+            ));
+        }
+    }
+
+    Ok(())
+}

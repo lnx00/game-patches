@@ -1,7 +1,5 @@
-use crate::{
-    framework::{byte_patch::BytePatch, patch::Patch},
-    sdk::{GameSdk, offsets::sigs},
-};
+use framework::{BytePatch, Patch};
+use crate::sdk::{GameSdk, offsets::sigs};
 
 /*
     The game uses factors 200 (x-axis) and 105 (y-axis) for the camera speed.

@@ -7,13 +7,12 @@ use windows::Win32::{
     },
 };
 
-use crate::{config::CONFIG, framework::manager::PatchManager, utils::platform};
+use framework::{PatchManager, utils::platform};
+use crate::config::CONFIG;
 
 mod config;
-mod framework;
 mod patches;
 mod sdk;
-mod utils;
 
 const PKG_NAME: &str = env!("CARGO_PKG_NAME");
 const PKG_VERSION: &str = env!("CARGO_PKG_VERSION");
@@ -30,23 +29,18 @@ fn cleanup() {
         pm.revert_all();
     }
 
+    tracing::info!("cleaning up sdk...");
+    if let Err(e) = sdk::cleanup() {
+        tracing::error!("failed to cleanup sdk: {}", e);
+    }
+
     tracing::info!("cleanup done!");
 }
 
 /// Initializes and runs all patches.
 /// Might block the caller, if hotkeys are enabled.
 fn run() -> Result<(), String> {
-    tracing::info!("waiting for game...");
-    sdk::wait_for_game(std::time::Duration::from_secs(15))?;
-
-    tracing::info!("checking game version...");
-    match sdk::check_game_version() {
-        Ok(version) => tracing::info!("game version ({:X}) validated", version),
-        Err(e) => tracing::warn!("failed to check game version: {}", e),
-    }
-
-    tracing::info!("initializing sdk...");
-    sdk::GameSdk::init()?;
+    sdk::wait_until_ready(std::time::Duration::from_secs(30))?;
 
     let mut patch_manager = PatchManager::new();
 
@@ -54,7 +48,7 @@ fn run() -> Result<(), String> {
     patches::register_all(&mut patch_manager);
 
     tracing::info!("applying patches...");
-    patch_manager.apply_all();
+    patch_manager.apply_all(&CONFIG);
 
     *PATCH_MANAGER.write().unwrap() = Some(patch_manager);
 

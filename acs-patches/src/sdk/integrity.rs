@@ -25,7 +25,7 @@ use windows::{
     core::{PCSTR, s},
 };
 
-use crate::utils::WaitLock;
+use framework::utils::WaitLock;
 
 #[cfg(target_pointer_width = "64")]
 use windows::Win32::System::Diagnostics::Debug::IMAGE_NT_HEADERS64 as IMAGE_NT_HEADERS;

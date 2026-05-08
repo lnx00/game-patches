@@ -1,4 +1,4 @@
-use crate::framework::manager::PatchManager;
+use framework::PatchManager;
 
 pub mod disable_camera_smoothing;
 

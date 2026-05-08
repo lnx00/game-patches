@@ -2,7 +2,7 @@ use std::{sync::OnceLock, thread, time::Duration};
 
 use libmem::Module;
 
-use crate::utils::platform;
+use framework::utils::platform;
 
 pub mod integrity;
 pub mod offsets;

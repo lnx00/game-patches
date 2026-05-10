@@ -1,11 +1,10 @@
+pub mod byte_patch;
 pub mod config;
-pub mod framework;
+pub mod manager;
+pub mod patch;
 pub mod utils;
 
+pub use byte_patch::{BytePatch, BytePatchNt};
 pub use config::Config;
-pub use framework::{
-    byte_patch::BytePatch,
-    byte_patch::BytePatchNt,
-    manager::PatchManager,
-    patch::Patch,
-};
+pub use manager::PatchManager;
+pub use patch::Patch;

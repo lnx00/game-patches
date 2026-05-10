@@ -1,4 +1,4 @@
-use crate::{config::Config, framework::patch::Patch};
+use crate::{config::Config, patch::Patch};
 
 struct ManagedPatch {
     patch: Box<dyn Patch>,

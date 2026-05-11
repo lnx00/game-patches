@@ -321,7 +321,7 @@ impl IntegrityHook {
     }
 
     extern "system" fn empty_thread(_: *mut c_void) -> u32 {
-        return 0;
+        0
     }
 
     extern "system" fn hk_create_thread(
@@ -342,7 +342,7 @@ impl IntegrityHook {
 
         let original = WaitLock::wait(&ORIG_CREATE_THREAD);
 
-        return unsafe {
+        unsafe {
             original(
                 lp_thread_attributes,
                 dw_stack_size,
@@ -351,6 +351,6 @@ impl IntegrityHook {
                 dw_creation_flags,
                 lp_thread_id,
             )
-        };
+        }
     }
 }

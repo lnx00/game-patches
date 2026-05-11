@@ -1,7 +1,7 @@
 use std::{arch::x86_64::__m128, ffi::c_void, sync::OnceLock};
 
 use framework::{Patch, utils::WaitLock};
-use crate::sdk::{offsets::offsets, structs::structs};
+use crate::sdk::{offsets, structs};
 
 /*
     We adjust the mouse sensitivity by multiplying the axis movement with a factor, that

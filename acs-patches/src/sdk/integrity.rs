@@ -25,7 +25,7 @@ use windows::{
     core::{PCSTR, s},
 };
 
-use framework::utils::WaitLock;
+use framework::utils::{self, WaitLock};
 
 #[cfg(target_pointer_width = "64")]
 use windows::Win32::System::Diagnostics::Debug::IMAGE_NT_HEADERS64 as IMAGE_NT_HEADERS;
@@ -107,25 +107,6 @@ static INTEGRITY_THREAD_VERDICTS: LazyLock<RwLock<HashMap<usize, bool>>> =
 
 static INTEGRITY_THREAD_FOUND: AtomicBool = AtomicBool::new(false);
 
-/// Extract the relative target address (jmp or call)
-fn extract_relative_target(inst: &libmem::Inst) -> Option<usize> {
-    let next_address = inst.address as i64 + inst.bytes.len() as i64;
-
-    let target = match inst.bytes.as_slice() {
-        [0xE8 | 0xE9, displacement @ ..] if displacement.len() == 4 => {
-            let displacement = i32::from_le_bytes(displacement.try_into().ok()?) as i64;
-            next_address.checked_add(displacement)?
-        }
-        [0xEB, displacement] => {
-            let displacement = i8::from_le_bytes([*displacement]) as i64;
-            next_address.checked_add(displacement)?
-        }
-        _ => return None,
-    };
-
-    usize::try_from(target).ok()
-}
-
 /// Analyzes the thread start code and checks if it is the integrity thread
 fn analyze_thread_start(start_address: usize) -> Option<bool> {
     unsafe {
@@ -155,7 +136,7 @@ fn analyze_thread_start(start_address: usize) -> Option<bool> {
                 return Some(false);
             }
 
-            let target_addr = extract_relative_target(&inst)?;
+            let target_addr = utils::extract_relative_target(&inst)?;
             tracing::debug!("target addr of {}: {}", mnemonic, target_addr);
 
             let in_range = section_range.contains(&target_addr);

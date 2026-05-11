@@ -1,7 +1,14 @@
 use std::{arch::x86_64::__m128, ffi::c_void, sync::OnceLock};
 
-use framework::{Patch, utils::WaitLock};
-use crate::sdk::{offsets, structs};
+use crate::sdk::{
+    GameSdk,
+    offsets::{self, sigs},
+    structs,
+};
+use framework::{
+    Patch,
+    utils::{self, WaitLock},
+};
 
 /*
     We adjust the mouse sensitivity by multiplying the axis movement with a factor, that
@@ -31,6 +38,7 @@ static ORIG_AXIS_MOVEMENT: OnceLock<AxisMovementFn> = OnceLock::new();
 
 pub struct MouseSensitivityFix {
     trampoline: Option<libmem::Trampoline>,
+    target_address: usize,
 }
 
 impl MouseSensitivityFix {
@@ -82,16 +90,23 @@ impl Patch for MouseSensitivityFix {
     where
         Self: Sized,
     {
-        Ok(Box::new(Self { trampoline: None }))
+        let call_address = GameSdk::inst().find_sig(sigs::GET_AXIS_MOVEMENT_CALL)?;
+        let inst = unsafe { libmem::disassemble(call_address).ok_or("failed to disassemble")? };
+        let target_address =
+            utils::extract_relative_target(&inst).ok_or("failed to extract call target")?;
+
+        Ok(Box::new(Self {
+            trampoline: None,
+            target_address,
+        }))
     }
 
     fn apply(&mut self) -> Result<(), String> {
-        let original_func: usize = offsets::GET_AXIS_MOVEMENT_ADDRESS;
         let hook_func: usize = Self::hk_get_axis_movement as *mut c_void as usize;
 
         unsafe {
-            let trampoline =
-                libmem::hook_code(original_func, hook_func).ok_or("failed to hook function")?;
+            let trampoline = libmem::hook_code(self.target_address, hook_func)
+                .ok_or("failed to hook function")?;
 
             let _ = ORIG_AXIS_MOVEMENT.set(trampoline.callable::<AxisMovementFn>());
             self.trampoline = Some(trampoline);
@@ -103,7 +118,7 @@ impl Patch for MouseSensitivityFix {
     fn revert(&mut self) -> Result<(), String> {
         if let Some(trampoline) = self.trampoline.take() {
             unsafe {
-                libmem::unhook_code(offsets::GET_AXIS_MOVEMENT_ADDRESS, trampoline);
+                libmem::unhook_code(self.target_address, trampoline);
             }
         }
 

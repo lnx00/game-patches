@@ -117,3 +117,22 @@ pub fn patch_bytes_nt(address: usize, bytes: &[u8]) -> Result<(), String> {
 
     Ok(())
 }
+
+/// Extract the relative target address (jmp or call)
+pub fn extract_relative_target(inst: &libmem::Inst) -> Option<usize> {
+    let next_address = inst.address as i64 + inst.bytes.len() as i64;
+
+    let target = match inst.bytes.as_slice() {
+        [0xE8 | 0xE9, displacement @ ..] if displacement.len() == 4 => {
+            let displacement = i32::from_le_bytes(displacement.try_into().ok()?) as i64;
+            next_address.checked_add(displacement)?
+        }
+        [0xEB, displacement] => {
+            let displacement = i8::from_le_bytes([*displacement]) as i64;
+            next_address.checked_add(displacement)?
+        }
+        _ => return None,
+    };
+
+    usize::try_from(target).ok()
+}

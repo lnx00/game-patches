@@ -1,10 +1,9 @@
-use std::{arch::x86_64::__m128, ffi::c_void, sync::OnceLock};
+use std::arch::x86_64::__m128;
+use std::ffi::c_void;
+use std::sync::OnceLock;
 
 use crate::sdk::{GameSdk, offsets::sigs, structs};
-use framework::{
-    Patch,
-    utils::{self, WaitLock},
-};
+use framework::{Patch, utils};
 
 /*
     We adjust the mouse sensitivity by multiplying the axis movement with a factor, that
@@ -66,8 +65,7 @@ impl MouseSensitivityFix {
                 })
                 .unwrap_or(1.0);
 
-            let original = WaitLock::wait(&ORIG_AXIS_MOVEMENT);
-            original(a1, a2, a3, a4, a5, a6, invert_factor * new_factor, a8, a9)
+            ORIG_AXIS_MOVEMENT.wait()(a1, a2, a3, a4, a5, a6, invert_factor * new_factor, a8, a9)
         }
     }
 }
@@ -93,14 +91,14 @@ impl Patch for MouseSensitivityFix {
         // Retrieve hook target address
         let call_address = sdk.find_sig(sigs::GET_AXIS_MOVEMENT_CALL)?;
         let inst = unsafe { libmem::disassemble(call_address).ok_or("failed to disassemble")? };
-        let target_address =
-            utils::extract_relative_target(&inst).ok_or("failed to extract call target")?;
+        let target_address = utils::extract_relative_target(&inst)
+            .ok_or("failed to extract call target")?;
 
         // Retrieve clock instance
         let sig_address = sdk.find_sig(sigs::ROOT_CLOCK_ACCESS)?;
         let inst = unsafe { libmem::disassemble(sig_address).ok_or("failed to disassemble")? };
-        let root_clock_address =
-            utils::extract_relative_target(&inst).ok_or("failed to extract root clock address")?;
+        let root_clock_address = utils::extract_relative_target(&inst)
+            .ok_or("failed to extract root clock address")?;
 
         let _ = ROOT_CLOCK_ADDR.set(root_clock_address);
 

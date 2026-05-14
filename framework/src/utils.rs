@@ -2,7 +2,7 @@ pub mod platform;
 
 use std::{
     ffi::c_void,
-    sync::{LazyLock, OnceLock},
+    sync::LazyLock,
 };
 
 use windows::{
@@ -33,21 +33,6 @@ static NT_PROTECT_VIRTUAL_MEMORY: LazyLock<NtProtectVirtualMemoryFn> = LazyLock:
 
     func
 });
-
-pub trait WaitLock<T> {
-    fn wait(&self) -> T;
-}
-
-impl<T: Copy> WaitLock<T> for OnceLock<T> {
-    fn wait(&self) -> T {
-        loop {
-            if let Some(val) = self.get() {
-                return *val;
-            }
-            std::hint::spin_loop();
-        }
-    }
-}
 
 pub fn patch_bytes(address: usize, bytes: &[u8]) -> Result<(), String> {
     unsafe {

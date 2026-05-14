@@ -10,6 +10,7 @@ use std::{
     time::Duration,
 };
 
+use framework::utils;
 use windows::{
     Wdk::System::Threading::{NtQueryInformationThread, ThreadQuerySetWin32StartAddress},
     Win32::{
@@ -21,8 +22,6 @@ use windows::{
     },
     core::s,
 };
-
-use framework::utils::{self, WaitLock};
 
 /*
     The main integrity check thread immediately jumps into the VMP section (.UBX0).
@@ -263,10 +262,8 @@ impl IntegrityHook {
             tracing::info!("CreateThread: prevented integrity check thread creation");
         }
 
-        let original = WaitLock::wait(&ORIG_CREATE_THREAD);
-
         unsafe {
-            original(
+            ORIG_CREATE_THREAD.wait()(
                 lp_thread_attributes,
                 dw_stack_size,
                 lp_start_address,

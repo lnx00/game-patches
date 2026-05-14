@@ -1,15 +1,14 @@
-use std::{
-    collections::HashMap,
-    ffi::c_void,
-    ops::Range,
-    sync::{
-        LazyLock, Mutex, MutexGuard, OnceLock, RwLock,
-        atomic::{AtomicBool, Ordering},
-    },
-    thread,
-    time::Duration,
+use std::collections::HashMap;
+use std::ffi::c_void;
+use std::ops::Range;
+use std::sync::{
+    LazyLock, Mutex, MutexGuard, OnceLock, RwLock,
+    atomic::{AtomicBool, Ordering},
 };
+use std::thread;
+use std::time::Duration;
 
+use framework::utils;
 use windows::{
     Wdk::System::Threading::{NtQueryInformationThread, ThreadQuerySetWin32StartAddress},
     Win32::{
@@ -21,8 +20,6 @@ use windows::{
     },
     core::s,
 };
-
-use framework::utils::{self, WaitLock};
 
 /*
     The main integrity check thread immediately jumps into the VMP section (.UBX0).
@@ -263,10 +260,8 @@ impl IntegrityHook {
             tracing::info!("CreateThread: prevented integrity check thread creation");
         }
 
-        let original = WaitLock::wait(&ORIG_CREATE_THREAD);
-
         unsafe {
-            original(
+            ORIG_CREATE_THREAD.wait()(
                 lp_thread_attributes,
                 dw_stack_size,
                 lp_start_address,

@@ -123,14 +123,26 @@ pub fn extract_relative_target(inst: &libmem::Inst) -> Option<usize> {
     let next_address = inst.address as i64 + inst.bytes.len() as i64;
 
     let target = match inst.bytes.as_slice() {
+        // call & jmp (rel32)
         [0xE8 | 0xE9, displacement @ ..] if displacement.len() == 4 => {
             let displacement = i32::from_le_bytes(displacement.try_into().ok()?) as i64;
             next_address.checked_add(displacement)?
         }
+
+        // jmp (rel8)
         [0xEB, displacement] => {
             let displacement = i8::from_le_bytes([*displacement]) as i64;
             next_address.checked_add(displacement)?
         }
+
+        // mov r64, [rip + disp32] & mov [rip + disp32], r64
+        [0x48, 0x89 | 0x8B, modrm, displacement @ ..]
+            if (modrm & 0xC7) == 0x05 && displacement.len() == 4 =>
+        {
+            let displacement = i32::from_le_bytes(displacement.try_into().ok()?) as i64;
+            next_address.checked_add(displacement)?
+        }
+
         _ => return None,
     };
 

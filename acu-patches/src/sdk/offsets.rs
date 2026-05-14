@@ -1,5 +1,3 @@
-pub const ROOT_CLOCK_ADDRESS: usize = 0x14525D9D0;
-
 pub mod sigs {
     // 0x140032B74: mov rax, cs:g_RootClock
     pub const ROOT_CLOCK_ACCESS: &str = "48 8B 05 ? ? ? ? 44 0F B7 75";

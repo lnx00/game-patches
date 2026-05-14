@@ -1,10 +1,6 @@
 use std::{arch::x86_64::__m128, ffi::c_void, sync::OnceLock};
 
-use crate::sdk::{
-    GameSdk,
-    offsets::{self, sigs},
-    structs,
-};
+use crate::sdk::{GameSdk, offsets::sigs, structs};
 use framework::{
     Patch,
     utils::{self, WaitLock},
@@ -35,6 +31,7 @@ type AxisMovementFn = unsafe extern "system" fn(
 const REFERENCE_FRAME_TIME: f32 = 0.016;
 
 static ORIG_AXIS_MOVEMENT: OnceLock<AxisMovementFn> = OnceLock::new();
+static ROOT_CLOCK_ADDR: OnceLock<usize> = OnceLock::new();
 
 pub struct MouseSensitivityFix {
     trampoline: Option<libmem::Trampoline>,
@@ -55,8 +52,9 @@ impl MouseSensitivityFix {
         a9: f32,
     ) -> __m128 {
         unsafe {
-            let new_factor = (offsets::ROOT_CLOCK_ADDRESS as *mut *mut structs::Clock)
-                .as_ref()
+            let new_factor = ROOT_CLOCK_ADDR
+                .get()
+                .and_then(|clock_addr| (*clock_addr as *mut *mut structs::Clock).as_ref())
                 .and_then(|clock_ptr_ptr| (*clock_ptr_ptr).as_ref())
                 .and_then(|clock| {
                     let frame_delta_time = clock.delta_time;
@@ -90,10 +88,21 @@ impl Patch for MouseSensitivityFix {
     where
         Self: Sized,
     {
-        let call_address = GameSdk::inst().find_sig(sigs::GET_AXIS_MOVEMENT_CALL)?;
+        let sdk = GameSdk::inst();
+
+        // Retrieve hook target address
+        let call_address = sdk.find_sig(sigs::GET_AXIS_MOVEMENT_CALL)?;
         let inst = unsafe { libmem::disassemble(call_address).ok_or("failed to disassemble")? };
         let target_address =
             utils::extract_relative_target(&inst).ok_or("failed to extract call target")?;
+
+        // Retrieve clock instance
+        let sig_address = sdk.find_sig(sigs::ROOT_CLOCK_ACCESS)?;
+        let inst = unsafe { libmem::disassemble(sig_address).ok_or("failed to disassemble")? };
+        let root_clock_address =
+            utils::extract_relative_target(&inst).ok_or("failed to extract root clock address")?;
+
+        let _ = ROOT_CLOCK_ADDR.set(root_clock_address);
 
         Ok(Box::new(Self {
             trampoline: None,

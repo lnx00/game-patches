@@ -7,7 +7,13 @@ use serde::Deserialize;
 pub struct Config {
     pub show_console: bool,
     pub allow_unloading: bool,
+    #[serde(default = "default_log_level")]
+    pub log_level: String,
     pub patches: HashMap<String, bool>,
+}
+
+fn default_log_level() -> String {
+    "info".to_string()
 }
 
 impl Config {

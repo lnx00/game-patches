@@ -70,7 +70,7 @@ fn run() -> Result<(), String> {
 
 fn main_thread() {
     // Initialize logger
-    framework::init_logger(format!("{}.log", PKG_NAME));
+    framework::init_logger(format!("{}.log", PKG_NAME), &CONFIG.log_level);
 
     // Attach console window
     if CONFIG.show_console {

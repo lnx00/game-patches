@@ -70,7 +70,7 @@ fn run() -> Result<(), String> {
 
 fn main_thread() {
     // Initialize logger
-    tracing_subscriber::fmt().pretty().init();
+    framework::init_logger(format!("{}.log", PKG_NAME));
 
     // Attach console window
     if CONFIG.show_console {

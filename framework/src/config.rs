@@ -24,6 +24,15 @@ impl Config {
         Some(config)
     }
 
+    pub fn load_from_exe_dir(relative_path: &str) -> Config {
+        let config_path = std::env::current_exe()
+            .ok()
+            .and_then(|p| p.parent().map(|parent| parent.join(relative_path)))
+            .unwrap_or_else(|| std::path::PathBuf::from(relative_path));
+
+        Config::read(&config_path).unwrap_or_default()
+    }
+
     pub fn patch_enabled(&self, name: &str) -> bool {
         self.patches.get(name).cloned().unwrap_or(true)
     }

@@ -1,4 +1,16 @@
+mod config;
+mod patches;
+mod sdk;
+
+#[cfg(feature = "plugin")]
+mod plugin;
+
+// --- Standalone mode ---
+
+#[cfg(not(feature = "plugin"))]
 use std::{sync::RwLock, thread};
+
+#[cfg(not(feature = "plugin"))]
 use windows::Win32::{
     Foundation::HINSTANCE,
     System::{
@@ -7,22 +19,27 @@ use windows::Win32::{
     },
 };
 
+#[cfg(not(feature = "plugin"))]
 use framework::{PatchManager, utils::platform};
+
+#[cfg(not(feature = "plugin"))]
 use crate::config::CONFIG;
 
-mod config;
-mod patches;
-mod sdk;
-
+#[cfg(not(feature = "plugin"))]
 const PKG_NAME: &str = env!("CARGO_PKG_NAME");
+#[cfg(not(feature = "plugin"))]
 const PKG_VERSION: &str = env!("CARGO_PKG_VERSION");
+#[cfg(not(feature = "plugin"))]
 const PKG_AUTHORS: &str = env!("CARGO_PKG_AUTHORS");
 
+#[cfg(not(feature = "plugin"))]
 const VK_F11: i32 = 0x7A;
 
+#[cfg(not(feature = "plugin"))]
 static PATCH_MANAGER: RwLock<Option<PatchManager>> = RwLock::new(None);
 
 /// Tries to clean everything up for safe unloading
+#[cfg(not(feature = "plugin"))]
 fn cleanup() {
     tracing::info!("reverting patches...");
     if let Some(mut pm) = PATCH_MANAGER.write().unwrap().take() {
@@ -39,6 +56,7 @@ fn cleanup() {
 
 /// Initializes and runs all patches.
 /// Might block the caller, if hotkeys are enabled.
+#[cfg(not(feature = "plugin"))]
 fn run() -> Result<(), String> {
     sdk::wait_until_ready(std::time::Duration::from_secs(30))?;
 
@@ -68,6 +86,7 @@ fn run() -> Result<(), String> {
     Ok(())
 }
 
+#[cfg(not(feature = "plugin"))]
 fn main_thread() {
     // Initialize logger
     framework::init_logger(format!("{}.log", PKG_NAME), &CONFIG.log_level);
@@ -92,6 +111,7 @@ fn main_thread() {
     }
 }
 
+#[cfg(not(feature = "plugin"))]
 #[unsafe(no_mangle)]
 #[allow(non_snake_case)]
 extern "system" fn DllMain(dll_module: HINSTANCE, call_reason: u32, reserved: *mut ()) -> bool {
@@ -113,5 +133,73 @@ extern "system" fn DllMain(dll_module: HINSTANCE, call_reason: u32, reserved: *m
         _ => (),
     }
 
+    true
+}
+
+// --- Plugin mode ---
+
+#[cfg(feature = "plugin")]
+use framework::PatchManager;
+
+#[cfg(feature = "plugin")]
+use windows::Win32::Foundation::HINSTANCE;
+
+#[cfg(feature = "plugin")]
+use plugin::{ACUPluginInfo, ACUPluginLoaderInterface, PLUGIN_API_VERSION, make_version};
+
+#[cfg(feature = "plugin")]
+use crate::config::CONFIG;
+
+#[cfg(feature = "plugin")]
+fn run() -> Result<(), String> {
+    sdk::GameSdk::init()?;
+
+    let mut patch_manager = PatchManager::new();
+
+    tracing::info!("initializing patches...");
+    patches::register_all(&mut patch_manager);
+
+    tracing::info!("applying patches...");
+    patch_manager.apply_all(&CONFIG);
+
+    tracing::info!("patches ready!");
+
+    Ok(())
+}
+
+#[cfg(feature = "plugin")]
+extern "C" fn init_patches(_plugin_loader: &ACUPluginLoaderInterface) -> bool {
+    if let Err(e) = run() {
+        tracing::error!("{e}");
+    }
+
+    true
+}
+
+#[cfg(feature = "plugin")]
+#[unsafe(no_mangle)]
+pub unsafe extern "C" fn ACUPluginStart(
+    plugin_loader: &ACUPluginLoaderInterface,
+    your_plugin_info_out: &mut ACUPluginInfo,
+) -> bool {
+    let _ = plugin_loader.init_logger();
+
+    tracing::info!(
+        "Hello ACUFixes plugin loader version {}",
+        plugin_loader.m_plugin_loader_version
+    );
+
+    your_plugin_info_out.m_plugin_api_version = PLUGIN_API_VERSION;
+    your_plugin_info_out.m_plugin_version = make_version(0, 4, 0, 0);
+
+    your_plugin_info_out.m_init_stage_when_code_patches_are_safe_to_apply = Some(init_patches);
+
+    true
+}
+
+#[cfg(feature = "plugin")]
+#[unsafe(no_mangle)]
+#[allow(non_snake_case)]
+extern "system" fn DllMain(_dll_module: HINSTANCE, _call_reason: u32, _: *mut ()) -> bool {
     true
 }

@@ -1,14 +1,20 @@
-use std::{sync::OnceLock, thread, time::Duration};
+use std::sync::OnceLock;
 
 use libmem::Module;
 
+#[cfg(not(feature = "plugin"))]
+use std::{thread, time::Duration};
+
+#[cfg(not(feature = "plugin"))]
 use framework::utils::platform;
 
+#[cfg(not(feature = "plugin"))]
 pub mod integrity;
 pub mod offsets;
 pub mod structs;
 
 const GAME_MODULE_NAME: &str = "ACU.exe";
+#[cfg(not(feature = "plugin"))]
 const GAME_BINARY_TIMESTAMP: u32 = 0x54DB5826;
 
 static SDK_INSTANCE: OnceLock<GameSdk> = OnceLock::new();
@@ -59,6 +65,7 @@ impl GameSdk {
 }
 
 /// Blocks the caller until the game is fully ready and initialized.
+#[cfg(not(feature = "plugin"))]
 pub fn wait_until_ready(timeout: Duration) -> Result<(), String> {
     let start = std::time::Instant::now();
 
@@ -95,11 +102,13 @@ pub fn wait_until_ready(timeout: Duration) -> Result<(), String> {
     Ok(())
 }
 
+#[cfg(not(feature = "plugin"))]
 pub fn cleanup() -> Result<(), String> {
     tracing::info!("uninstalling integrity hook...");
     integrity::IntegrityHook::inst().cleanup()
 }
 
+#[cfg(not(feature = "plugin"))]
 pub fn check_game_version() -> Result<u32, String> {
     if let Some(current_timestamp) = platform::get_time_date_stamp() {
         if current_timestamp != GAME_BINARY_TIMESTAMP {

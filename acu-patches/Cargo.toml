@@ -1,8 +1,12 @@
 [package]
 name = "acu-patches"
-version = "0.4.0"
+version = "0.5.0"
 authors = ["lnx00"]
 edition = "2024"
+
+[features]
+default = []
+plugin = ["dep:assert-offset", "dep:tracing-subscriber"]
 
 [lib]
 crate-type = ["cdylib"]
@@ -15,3 +19,7 @@ toml = { workspace = true }
 serde = { workspace = true }
 libmem = { workspace = true }
 windows = { workspace = true }
+
+# Plugin-only dependencies
+assert-offset = { version = "0.1.1", optional = true }
+tracing-subscriber = { workspace = true, optional = true }

@@ -7,55 +7,8 @@ use framework::utils::platform;
 pub mod integrity;
 pub mod offsets;
 
-const GAME_MODULE_NAME: &str = "ACS.exe";
+pub const GAME_MODULE_NAME: &str = "ACS.exe";
 const GAME_BINARY_TIMESTAMP: u32 = 0x6932E389;
-
-static SDK_INSTANCE: OnceLock<GameSdk> = OnceLock::new();
-
-pub struct GameSdk {
-    pub game_module: Module,
-}
-
-unsafe impl Send for GameSdk {}
-unsafe impl Sync for GameSdk {}
-
-impl GameSdk {
-    pub fn init() -> Result<(), String> {
-        let game_module = libmem::find_module(GAME_MODULE_NAME).ok_or("game module not found")?;
-
-        tracing::info!(
-            "found game module '{}' at {:#X} (size: {:#X})",
-            GAME_MODULE_NAME,
-            game_module.base,
-            game_module.size
-        );
-
-        let sdk = GameSdk { game_module };
-
-        if SDK_INSTANCE.set(sdk).is_err() {
-            tracing::warn!("SDK already initialized");
-        }
-
-        Ok(())
-    }
-
-    pub fn inst() -> &'static GameSdk {
-        SDK_INSTANCE
-            .get()
-            .expect("SDK was accessed before initialization")
-    }
-
-    /// Finds the signature in the main game module
-    pub fn find_sig(&self, signature: &str) -> Result<usize, String> {
-        let result =
-            unsafe { libmem::sig_scan(signature, self.game_module.base, self.game_module.size) };
-
-        match result {
-            Some(address) => Ok(address),
-            None => Err(format!("failed to find signature '{}'", signature)),
-        }
-    }
-}
 
 /// Blocks the caller until the game is fully ready and initialized.
 pub fn wait_until_ready(timeout: Duration) -> Result<(), String> {
@@ -70,10 +23,6 @@ pub fn wait_until_ready(timeout: Duration) -> Result<(), String> {
 
         thread::sleep(std::time::Duration::from_millis(100));
     }
-
-    // Initialize SDK
-    tracing::info!("initializing sdk...");
-    GameSdk::init()?;
 
     // Check game version
     tracing::info!("checking game version...");

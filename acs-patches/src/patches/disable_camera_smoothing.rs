@@ -1,4 +1,4 @@
-use crate::sdk::{GameSdk, offsets::sigs};
+use crate::sdk::offsets::sigs;
 use framework::{BytePatchNt, Patch};
 
 /*
@@ -27,7 +27,9 @@ impl Patch for DisableCameraSmoothing {
     where
         Self: Sized,
     {
-        let target_address = GameSdk::inst().find_sig(sigs::JUMP_CAMERA_SMOOTHING)?;
+        let target_address = sigs::JUMP_CAMERA_SMOOTHING
+            .get()
+            .ok_or("failed to get JUMP_CAMERA_SMOOTHING signature")?;
 
         let patch_bytes: [u8; _] = [
             0xEB, // jmp

@@ -1,5 +1,6 @@
-use crate::sdk::offsets::sigs;
 use framework::{BytePatchNt, Patch};
+
+use crate::sdk::offsets;
 
 /*
     Just like Assassin's Creed Unity, the game has logic for disabling mouse smoothing.
@@ -27,7 +28,7 @@ impl Patch for DisableCameraSmoothing {
     where
         Self: Sized,
     {
-        let target_address = sigs::JUMP_CAMERA_SMOOTHING
+        let target_address = offsets::JUMP_CAMERA_SMOOTHING
             .get()
             .ok_or("failed to get JUMP_CAMERA_SMOOTHING signature")?;
 

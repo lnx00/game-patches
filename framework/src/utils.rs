@@ -47,20 +47,18 @@ pub fn patch_bytes(address: usize, bytes: &[u8]) -> Result<(), String> {
 }
 
 // Find a signature pattern in a module by name
-pub fn sig_scan_module(module_name: &str, signature: &str) -> Option<usize> {
-    if let Some(module) = libmem::find_module(module_name) {
-        if let Some(result) = unsafe { libmem::sig_scan(signature, module.base, module.size) } {
-            tracing::debug!(
-                "found signature: '{}' in '{}' at '{:X}'",
-                signature,
-                module_name,
-                result
-            );
-            return Some(result);
-        }
+pub fn sig_scan_module(module: &libmem::Module, signature: &str) -> Option<usize> {
+    if let Some(result) = unsafe { libmem::sig_scan(signature, module.base, module.size) } {
+        tracing::debug!(
+            "found signature: '{}' in '{}' at '{:X}'",
+            signature,
+            module.name,
+            result
+        );
+        return Some(result);
     }
 
-    tracing::debug!("signature not found: '{}' in '{}'", signature, module_name);
+    tracing::debug!("signature not found: '{}' in '{}'", signature, module.name);
     None
 }
 

@@ -1,13 +1,10 @@
-use std::{sync::OnceLock, thread, time::Duration};
-
-use libmem::Module;
+use std::{thread, time::Duration};
 
 use framework::utils::platform;
 
 pub mod integrity;
 pub mod offsets;
 
-pub const GAME_MODULE_NAME: &str = "ACS.exe";
 const GAME_BINARY_TIMESTAMP: u32 = 0x6932E389;
 
 /// Blocks the caller until the game is fully ready and initialized.
@@ -16,13 +13,7 @@ pub fn wait_until_ready(timeout: Duration) -> Result<(), String> {
 
     // Wait for game module
     tracing::info!("waiting for game module...");
-    while libmem::find_module(GAME_MODULE_NAME).is_none() {
-        if start.elapsed() >= timeout {
-            return Err("timeout while waiting for game".to_string());
-        }
-
-        thread::sleep(std::time::Duration::from_millis(100));
-    }
+    offsets::GAME_MODULE.wait();
 
     // Check game version
     tracing::info!("checking game version...");

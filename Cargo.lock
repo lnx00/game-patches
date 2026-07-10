@@ -1421,6 +1421,19 @@ dependencies = [
 ]
 
 [[package]]
+name = "wd-patches"
+version = "0.1.0"
+dependencies = [
+ "enable-ansi-support",
+ "framework",
+ "libmem",
+ "serde",
+ "toml",
+ "tracing",
+ "windows",
+]
+
+[[package]]
 name = "web-sys"
 version = "0.3.95"
 source = "registry+https://github.com/rust-lang/crates.io-index"

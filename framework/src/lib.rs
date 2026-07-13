@@ -9,5 +9,5 @@ pub use byte_patch::{BytePatch, BytePatchNt};
 pub use config::Config;
 pub use manager::PatchManager;
 pub use patch::Patch;
-pub use signature::LazySignature;
+pub use signature::{LazyModule, LazySignature};
 pub use utils::{logging::init_logger, patch_bytes, patch_bytes_nt, sig_scan_module};

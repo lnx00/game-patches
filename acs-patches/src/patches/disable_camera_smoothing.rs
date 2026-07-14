@@ -30,7 +30,7 @@ impl Patch for DisableCameraSmoothing {
     {
         let target_address = offsets::JUMP_CAMERA_SMOOTHING
             .get()
-            .ok_or("failed to get JUMP_CAMERA_SMOOTHING signature")?;
+            .map_err(|_| "failed to get JUMP_CAMERA_SMOOTHING signature")?;
 
         let patch_bytes: [u8; _] = [
             0xEB, // jmp

@@ -1,9 +1,13 @@
-use crate::sdk::{GameSdk, offsets::sigs};
+use crate::sdk::offsets;
 use framework::{BytePatchNt, Patch};
 
 /*
     The game applies mouse acceleration. We can disable this by skipping
     the corresponding function call.
+
+    There is also a maximum limit for the camera delta movement. This
+    can be disabled by patching out the condition that checks the
+    delta vector magnitude.
 */
 
 pub struct DisableMouseAccel {
@@ -27,8 +31,12 @@ impl Patch for DisableMouseAccel {
     where
         Self: Sized,
     {
-        let target_address_accel = GameSdk::inst().find_sig(sigs::CALL_MOUSE_ACCELERATION)?;
-        let target_address_clamp = GameSdk::inst().find_sig(sigs::CLAMP_INPUT_CONDITION)?;
+        let target_address_accel = offsets::CALL_MOUSE_ACCELERATION
+            .get()
+            .map_err(|_| "CALL_MOUSE_ACCELERATION")?;
+        let target_address_clamp = offsets::CLAMP_INPUT_CONDITION
+            .get()
+            .map_err(|_| "CLAMP_INPUT_CONDITION")?;
 
         let patch_bytes_accel: [u8; _] = [
             0x90, 0x90, 0x90, 0x90, 0x90, // nop
@@ -53,8 +61,8 @@ impl Patch for DisableMouseAccel {
     }
 
     fn revert(&mut self) -> Result<(), String> {
-        self.byte_patch_accel.revert()?;
         self.byte_patch_clamp.revert()?;
+        self.byte_patch_accel.revert()?;
         Ok(())
     }
 }

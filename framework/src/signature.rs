@@ -49,7 +49,7 @@ impl LazyModule {
 pub struct LazySignature {
     module: &'static LazyModule,
     pattern: &'static str,
-    address: OnceLock<Option<usize>>,
+    address: OnceLock<usize>,
 }
 
 impl LazySignature {
@@ -61,16 +61,32 @@ impl LazySignature {
         }
     }
 
-    pub fn get(&self) -> Option<usize> {
-        if let Some(address) = self.address.get() {
-            return *address;
+    pub fn get(&self) -> Result<usize, ()> {
+        self.address
+            .get()
+            .or_else(|| {
+                let module = self.module.get()?;
+                let address = Self::scan(module, self.pattern)?;
+
+                let _ = self.address.set(address);
+                self.address.get()
+            })
+            .ok_or(())
+            .cloned()
+    }
+
+    pub fn wait(&self) -> usize {
+        if let Ok(address) = self.get() {
+            return address;
         }
 
-        let module = self.module.get()?;
+        loop {
+            if let Ok(address) = self.get() {
+                return address;
+            }
 
-        return *self
-            .address
-            .get_or_init(|| Self::scan(module, self.pattern));
+            thread::sleep(Duration::from_millis(50));
+        }
     }
 
     fn scan(module: &libmem::Module, signature: &str) -> Option<usize> {

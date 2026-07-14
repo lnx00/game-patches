@@ -3,6 +3,7 @@ pub mod platform;
 
 use std::{ffi::c_void, sync::LazyLock};
 
+use anyhow::{Context, Result, bail};
 use windows::{
     Win32::{
         Foundation::{CloseHandle, HANDLE, NTSTATUS},
@@ -32,15 +33,15 @@ static NT_PROTECT_VIRTUAL_MEMORY: LazyLock<NtProtectVirtualMemoryFn> = LazyLock:
     func
 });
 
-pub fn patch_bytes(address: usize, bytes: &[u8]) -> Result<(), String> {
+pub fn patch_bytes(address: usize, bytes: &[u8]) -> Result<()> {
     unsafe {
         let old_protect = libmem::prot_memory(address, bytes.len(), libmem::Prot::XRW)
-            .ok_or("failed to change protection")?;
+            .with_context(|| format!("failed to change protection at {:#x}", address))?;
 
         libmem::write_memory(address, bytes);
 
         libmem::prot_memory(address, bytes.len(), old_protect)
-            .ok_or("failed to restore protection")?;
+            .with_context(|| format!("failed to restore protection at {:#x}", address))?;
 
         Ok(())
     }
@@ -64,7 +65,7 @@ pub fn sig_scan_module(module: &libmem::Module, signature: &str) -> Option<usize
 
 /// Patches the given bytes.
 /// Uses NtProtectVirtualMemory instead of VirtualProtect to bypass some anti-tamper checks.
-pub fn patch_bytes_nt(address: usize, bytes: &[u8]) -> Result<(), String> {
+pub fn patch_bytes_nt(address: usize, bytes: &[u8]) -> Result<()> {
     unsafe {
         // Open handle with proper access privileges
         let process_id = GetCurrentProcessId();
@@ -86,10 +87,7 @@ pub fn patch_bytes_nt(address: usize, bytes: &[u8]) -> Result<(), String> {
 
         if status.is_err() {
             let _ = CloseHandle(process_handle);
-            return Err(format!(
-                "NtProtectVirtualMemory failed with status: {:#X}",
-                status.0
-            ));
+            bail!("NtProtectVirtualMemory failed with status: {:#X}", status.0)
         }
 
         // Write the bytes
@@ -104,14 +102,12 @@ pub fn patch_bytes_nt(address: usize, bytes: &[u8]) -> Result<(), String> {
             &mut old_protect,
         );
 
-        let _ = CloseHandle(process_handle);
-
         if status.is_err() {
-            return Err(format!(
-                "NtProtectVirtualMemory failed with status: {:#X}",
-                status.0
-            ));
+            let _ = CloseHandle(process_handle);
+            bail!("NtProtectVirtualMemory failed with status: {:#X}", status.0)
         }
+
+        let _ = CloseHandle(process_handle);
     }
 
     Ok(())

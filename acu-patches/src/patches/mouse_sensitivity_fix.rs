@@ -1,3 +1,4 @@
+use anyhow::{Context, Result};
 use std::arch::x86_64::__m128;
 use std::ffi::c_void;
 use std::sync::OnceLock;
@@ -91,14 +92,14 @@ impl Patch for MouseSensitivityFix {
         // Retrieve hook target address
         let call_address = sdk.find_sig(sigs::GET_AXIS_MOVEMENT_CALL)?;
         let inst = unsafe { libmem::disassemble(call_address).ok_or("failed to disassemble")? };
-        let target_address = utils::extract_relative_target(&inst)
-            .ok_or("failed to extract call target")?;
+        let target_address =
+            utils::extract_relative_target(&inst).ok_or("failed to extract call target")?;
 
         // Retrieve clock instance
         let sig_address = sdk.find_sig(sigs::ROOT_CLOCK_ACCESS)?;
         let inst = unsafe { libmem::disassemble(sig_address).ok_or("failed to disassemble")? };
-        let root_clock_address = utils::extract_relative_target(&inst)
-            .ok_or("failed to extract root clock address")?;
+        let root_clock_address =
+            utils::extract_relative_target(&inst).ok_or("failed to extract root clock address")?;
 
         let _ = ROOT_CLOCK_ADDR.set(root_clock_address);
 
@@ -108,12 +109,14 @@ impl Patch for MouseSensitivityFix {
         }))
     }
 
-    fn apply(&mut self) -> Result<(), String> {
+    fn apply(&mut self) -> Result<()> {
         let hook_func: usize = Self::hk_get_axis_movement as *mut c_void as usize;
 
         unsafe {
-            let trampoline = libmem::hook_code(self.target_address, hook_func)
-                .ok_or("failed to hook function")?;
+            let trampoline =
+                libmem::hook_code(self.target_address, hook_func).with_context(|| {
+                    format!("failed to hook function at {:#x}", self.target_address)
+                })?;
 
             let _ = ORIG_AXIS_MOVEMENT.set(trampoline.callable::<AxisMovementFn>());
             self.trampoline = Some(trampoline);
@@ -122,7 +125,7 @@ impl Patch for MouseSensitivityFix {
         Ok(())
     }
 
-    fn revert(&mut self) -> Result<(), String> {
+    fn revert(&mut self) -> Result<()> {
         if let Some(trampoline) = self.trampoline.take() {
             unsafe {
                 libmem::unhook_code(self.target_address, trampoline);

@@ -1,5 +1,6 @@
 use framework::{BytePatch, Patch};
 use crate::sdk::{GameSdk, offsets::sigs};
+use anyhow::Result;
 
 /*
     (Experimental)
@@ -48,15 +49,15 @@ impl Patch for MouseSensitivityFix {
         }))
     }
 
-    fn apply(&mut self) -> Result<(), String> {
+    fn apply(&mut self) -> Result<()> {
         self.byte_patch_1.apply()?;
         self.byte_patch_2.apply()?;
         Ok(())
     }
 
-    fn revert(&mut self) -> Result<(), String> {
-        self.byte_patch_1.revert()?;
+    fn revert(&mut self) -> Result<()> {
         self.byte_patch_2.revert()?;
+        self.byte_patch_1.revert()?;
         Ok(())
     }
 }

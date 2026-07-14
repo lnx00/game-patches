@@ -1,4 +1,5 @@
 use crate::utils;
+use anyhow::Result;
 
 pub struct BytePatch<const N: usize> {
     address: usize,
@@ -17,7 +18,7 @@ impl<const N: usize> BytePatch<N> {
         }
     }
 
-    pub fn apply(&mut self) -> Result<(), String> {
+    pub fn apply(&mut self) -> Result<()> {
         if self.is_applied {
             return Ok(());
         }
@@ -31,7 +32,7 @@ impl<const N: usize> BytePatch<N> {
         Ok(())
     }
 
-    pub fn revert(&mut self) -> Result<(), String> {
+    pub fn revert(&mut self) -> Result<()> {
         if !self.is_applied {
             return Ok(());
         }
@@ -60,7 +61,7 @@ impl<const N: usize> BytePatchNt<N> {
         }
     }
 
-    pub fn apply(&mut self) -> Result<(), String> {
+    pub fn apply(&mut self) -> Result<()> {
         if self.is_applied {
             return Ok(());
         }
@@ -74,7 +75,7 @@ impl<const N: usize> BytePatchNt<N> {
         Ok(())
     }
 
-    pub fn revert(&mut self) -> Result<(), String> {
+    pub fn revert(&mut self) -> Result<()> {
         if !self.is_applied {
             return Ok(());
         }

@@ -9,6 +9,7 @@ crate-type = ["cdylib"]
 
 [dependencies]
 framework = { path = "../framework" }
+anyhow ={ workspace = true }
 tracing = { workspace = true }
 enable-ansi-support = { workspace = true }
 toml = { workspace = true }

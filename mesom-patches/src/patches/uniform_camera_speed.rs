@@ -1,5 +1,6 @@
 use framework::{BytePatch, Patch};
 use crate::sdk::{GameSdk, offsets::sigs};
+use anyhow::Result;
 
 /*
     The game uses factors 200 (x-axis) and 105 (y-axis) for the camera speed.
@@ -38,12 +39,12 @@ impl Patch for UniformCameraSpeed {
         Ok(Box::new(UniformCameraSpeed { byte_patch }))
     }
 
-    fn apply(&mut self) -> Result<(), String> {
+    fn apply(&mut self) -> Result<()> {
         self.byte_patch.apply()?;
         Ok(())
     }
 
-    fn revert(&mut self) -> Result<(), String> {
+    fn revert(&mut self) -> Result<()> {
         self.byte_patch.revert()?;
         Ok(())
     }

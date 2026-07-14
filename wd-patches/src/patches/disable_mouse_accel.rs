@@ -1,5 +1,6 @@
 use crate::sdk::offsets;
 use framework::{BytePatchNt, Patch};
+use anyhow::Result;
 
 /*
     The game applies mouse acceleration. We can disable this by skipping
@@ -54,13 +55,13 @@ impl Patch for DisableMouseAccel {
         }))
     }
 
-    fn apply(&mut self) -> Result<(), String> {
+    fn apply(&mut self) -> Result<()> {
         self.byte_patch_accel.apply()?;
         self.byte_patch_clamp.apply()?;
         Ok(())
     }
 
-    fn revert(&mut self) -> Result<(), String> {
+    fn revert(&mut self) -> Result<()> {
         self.byte_patch_clamp.revert()?;
         self.byte_patch_accel.revert()?;
         Ok(())

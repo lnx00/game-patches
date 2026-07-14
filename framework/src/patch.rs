@@ -1,3 +1,5 @@
+use anyhow::Result;
+
 pub trait Patch: Send + Sync {
     fn name() -> &'static str
     where
@@ -11,6 +13,6 @@ pub trait Patch: Send + Sync {
     where
         Self: Sized;
 
-    fn apply(&mut self) -> Result<(), String>;
-    fn revert(&mut self) -> Result<(), String>;
+    fn apply(&mut self) -> Result<()>;
+    fn revert(&mut self) -> Result<()>;
 }

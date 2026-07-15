@@ -1,6 +1,5 @@
+use anyhow::{Result, anyhow, bail};
 use std::{sync::OnceLock, thread, time::Duration};
-
-use crate::utils;
 
 pub struct LazyModule {
     name: &'static str,
@@ -15,29 +14,32 @@ impl LazyModule {
         }
     }
 
-    pub fn get(&self) -> Option<&libmem::Module> {
-        self.module.get().or_else(|| {
-            let module = libmem::find_module(self.name)?;
-            tracing::debug!(
-                "found module '{}': {:x} - {:x} ({:x})",
-                module.name,
-                module.base,
-                module.end,
-                module.size
-            );
+    pub fn get(&self) -> Result<&libmem::Module> {
+        self.module
+            .get()
+            .or_else(|| {
+                let module = libmem::find_module(self.name)?;
+                tracing::debug!(
+                    "found module '{}': {:x} - {:x} ({:x})",
+                    module.name,
+                    module.base,
+                    module.end,
+                    module.size
+                );
 
-            let _ = self.module.set(module);
-            self.module.get()
-        })
+                let _ = self.module.set(module);
+                self.module.get()
+            })
+            .ok_or_else(|| anyhow!("module not found"))
     }
 
     pub fn wait(&self) -> &libmem::Module {
-        if let Some(module) = self.get() {
+        if let Ok(module) = self.get() {
             return module;
         }
 
         loop {
-            if let Some(module) = self.get() {
+            if let Ok(module) = self.get() {
                 return module;
             }
 
@@ -61,18 +63,16 @@ impl LazySignature {
         }
     }
 
-    pub fn get(&self) -> Result<usize, ()> {
-        self.address
-            .get()
-            .or_else(|| {
-                let module = self.module.get()?;
-                let address = Self::scan(module, self.pattern)?;
+    pub fn get(&self) -> Result<usize> {
+        if let Some(&addr) = self.address.get() {
+            return Ok(addr);
+        }
 
-                let _ = self.address.set(address);
-                self.address.get()
-            })
-            .ok_or(())
-            .cloned()
+        let module = self.module.get()?;
+        let address = Self::scan(module, self.pattern)?;
+
+        let _ = self.address.set(address);
+        Ok(address)
     }
 
     pub fn wait(&self) -> usize {
@@ -89,7 +89,7 @@ impl LazySignature {
         }
     }
 
-    fn scan(module: &libmem::Module, signature: &str) -> Option<usize> {
+    fn scan(module: &libmem::Module, signature: &str) -> Result<usize> {
         if let Some(result) = unsafe { libmem::sig_scan(signature, module.base, module.size) } {
             tracing::debug!(
                 "found signature: '{}' in '{}' at '{:X}'",
@@ -97,10 +97,9 @@ impl LazySignature {
                 module.name,
                 result
             );
-            return Some(result);
+            return Ok(result);
         }
 
-        tracing::debug!("signature not found: '{}' in '{}'", signature, module.name);
-        None
+        bail!("signature not found: '{}' in '{}'", signature, module.name)
     }
 }

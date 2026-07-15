@@ -1,4 +1,10 @@
-pub mod sigs {
-    // 0x140516BEB: movss xmm3, dword ptr [rax]
-    pub const LOAD_CAMERA_SMOOTHING_FACTORS: &str = "F3 0F 10 18 F3 0F 10 78 ? F3 0F 10 55";
-}
+use framework::{LazyModule, LazySignature};
+
+/* Modules */
+pub static GAME_MODULE: LazyModule = LazyModule::new("ShadowOfWar.exe");
+
+/* Signatures */
+
+// 0x140516BEB: movss xmm3, dword ptr [rax]
+pub static LOAD_CAMERA_SMOOTHING_FACTORS: LazySignature =
+    LazySignature::new(&GAME_MODULE, "F3 0F 10 18 F3 0F 10 78 ? F3 0F 10 55");

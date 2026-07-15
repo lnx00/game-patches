@@ -1,6 +1,7 @@
-use framework::{BytePatch, Patch};
-use crate::sdk::{GameSdk, offsets::sigs};
 use anyhow::Result;
+use framework::{BytePatch, Patch};
+
+use crate::sdk::offsets;
 
 /*
     The game uses factors 200 (x-axis) and 105 (y-axis) for the camera speed.
@@ -23,11 +24,11 @@ impl Patch for UniformCameraSpeed {
         Some("uniform_camera_speed")
     }
 
-    fn init() -> Result<Box<dyn Patch>, String>
+    fn init() -> Result<Box<dyn Patch>>
     where
         Self: Sized,
     {
-        let target_address = GameSdk::inst().find_sig(sigs::LOAD_X_AXIS_FACTOR)?;
+        let target_address = offsets::LOAD_X_AXIS_FACTOR.get()?;
 
         let patch_bytes: [u8; 8] = [
             0xF3, 0x0F, 0x10, 0x0D, 0x4C, 0xC1, 0x29,

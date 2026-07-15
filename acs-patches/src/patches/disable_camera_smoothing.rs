@@ -24,13 +24,11 @@ impl Patch for DisableCameraSmoothing {
         Some("disable_camera_smoothing")
     }
 
-    fn init() -> Result<Box<dyn Patch>, String>
+    fn init() -> Result<Box<dyn Patch>>
     where
         Self: Sized,
     {
-        let target_address = offsets::JUMP_CAMERA_SMOOTHING
-            .get()
-            .map_err(|_| "failed to get JUMP_CAMERA_SMOOTHING signature")?;
+        let target_address = offsets::JUMP_CAMERA_SMOOTHING.get()?;
 
         let patch_bytes: [u8; _] = [
             0xEB, // jmp

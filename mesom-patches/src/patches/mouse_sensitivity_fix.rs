@@ -1,6 +1,6 @@
-use framework::{BytePatch, Patch};
-use crate::sdk::{GameSdk, offsets::sigs};
+use crate::sdk::offsets;
 use anyhow::Result;
+use framework::{BytePatch, Patch};
 
 /*
     (Experimental)
@@ -30,12 +30,12 @@ impl Patch for MouseSensitivityFix {
         Some("mouse_sensitivity_fix")
     }
 
-    fn init() -> Result<Box<dyn Patch>, String>
+    fn init() -> Result<Box<dyn Patch>>
     where
         Self: Sized,
     {
-        let target_address_1 = GameSdk::inst().find_sig(sigs::MULT_X_AXIS_DELTA_TIME)?;
-        let target_address_2 = GameSdk::inst().find_sig(sigs::MULT_Y_AXIS_DELTA_TIME)?;
+        let target_address_1 = offsets::MULT_X_AXIS_DELTA_TIME.get()?;
+        let target_address_2 = offsets::MULT_Y_AXIS_DELTA_TIME.get()?;
 
         let patch_bytes_1: [u8; 5] = [0xF3, 0x41, 0x0F, 0x59, 0xCA]; // mulss xmm1, xmm10
         let patch_bytes_2: [u8; 5] = [0xF3, 0x41, 0x0F, 0x59, 0xD2]; // mulss xmm2, xmm10

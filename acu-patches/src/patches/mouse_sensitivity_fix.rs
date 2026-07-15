@@ -3,7 +3,7 @@ use std::arch::x86_64::__m128;
 use std::ffi::c_void;
 use std::sync::OnceLock;
 
-use crate::sdk::{GameSdk, offsets::sigs, structs};
+use crate::sdk::{offsets, structs};
 use framework::{Patch, utils};
 
 /*
@@ -83,23 +83,21 @@ impl Patch for MouseSensitivityFix {
         Some("mouse_sensitivity_fix")
     }
 
-    fn init() -> Result<Box<dyn Patch>, String>
+    fn init() -> Result<Box<dyn Patch>>
     where
         Self: Sized,
     {
-        let sdk = GameSdk::inst();
-
         // Retrieve hook target address
-        let call_address = sdk.find_sig(sigs::GET_AXIS_MOVEMENT_CALL)?;
-        let inst = unsafe { libmem::disassemble(call_address).ok_or("failed to disassemble")? };
+        let call_address = offsets::GET_AXIS_MOVEMENT_CALL.get()?;
+        let inst = unsafe { libmem::disassemble(call_address).context("failed to disassemble")? };
         let target_address =
-            utils::extract_relative_target(&inst).ok_or("failed to extract call target")?;
+            utils::extract_relative_target(&inst).context("failed to extract call target")?;
 
         // Retrieve clock instance
-        let sig_address = sdk.find_sig(sigs::ROOT_CLOCK_ACCESS)?;
-        let inst = unsafe { libmem::disassemble(sig_address).ok_or("failed to disassemble")? };
+        let sig_address = offsets::ROOT_CLOCK_ACCESS.get()?;
+        let inst = unsafe { libmem::disassemble(sig_address).context("failed to disassemble")? };
         let root_clock_address =
-            utils::extract_relative_target(&inst).ok_or("failed to extract root clock address")?;
+            utils::extract_relative_target(&inst).context("failed to extract root clock address")?;
 
         let _ = ROOT_CLOCK_ADDR.set(root_clock_address);
 

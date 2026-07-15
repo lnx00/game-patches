@@ -1,6 +1,7 @@
 use framework::{BytePatch, Patch};
-use crate::sdk::{GameSdk, offsets::sigs};
 use anyhow::Result;
+
+use crate::sdk::offsets;
 
 /*
     We can disable mouse smoothing by setting the registers holding
@@ -26,11 +27,11 @@ impl Patch for DisableCameraSmoothing {
         Some("disable_camera_smoothing")
     }
 
-    fn init() -> Result<Box<dyn Patch>, String>
+    fn init() -> Result<Box<dyn Patch>>
     where
         Self: Sized,
     {
-        let target_address = GameSdk::inst().find_sig(sigs::LOAD_CAMERA_SMOOTHING_FACTORS)?;
+        let target_address = offsets::LOAD_CAMERA_SMOOTHING_FACTORS.get()?;
 
         let patch_bytes: [u8; _] = [
             0x66, 0x0F, 0xEF, 0xDB, // pxor xmm3, xmm3

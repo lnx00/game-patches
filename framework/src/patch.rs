@@ -9,7 +9,7 @@ pub trait Patch: Send + Sync {
         None
     }
 
-    fn init() -> Result<Box<dyn Patch>, String>
+    fn init() -> Result<Box<dyn Patch>>
     where
         Self: Sized;
 

@@ -1,6 +1,7 @@
 use framework::{BytePatch, Patch};
-use crate::sdk::{GameSdk, offsets::sigs};
 use anyhow::Result;
+
+use crate::sdk::offsets;
 
 /*
     The game loads a smoothing value of 0.05 by default. We can disable
@@ -23,11 +24,11 @@ impl Patch for DisableCameraSmoothing {
         Some("disable_camera_smoothing")
     }
 
-    fn init() -> Result<Box<dyn Patch>, String>
+    fn init() -> Result<Box<dyn Patch>>
     where
         Self: Sized,
     {
-        let target_address = GameSdk::inst().find_sig(sigs::LOAD_CAMERA_SMOOTHING_FACTOR)?;
+        let target_address = offsets::LOAD_CAMERA_SMOOTHING_FACTOR.get()?;
 
         let patch_bytes: [u8; _] = [
             0x66, 0x0F, 0xEF, 0xE4, // pxor xmm4, xmm4

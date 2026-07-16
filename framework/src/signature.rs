@@ -19,13 +19,7 @@ impl LazyModule {
             .get()
             .or_else(|| {
                 let module = libmem::find_module(self.name)?;
-                tracing::debug!(
-                    "found module '{}': {:x} - {:x} ({:x})",
-                    module.name,
-                    module.base,
-                    module.end,
-                    module.size
-                );
+                tracing::debug!("found module: {}", module);
 
                 let _ = self.module.set(module);
                 self.module.get()

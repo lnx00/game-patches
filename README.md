@@ -8,6 +8,7 @@ This repository contains a set of quality-of-life patches for several PC games. 
 - [Assassin's Creed Syndicate](./acs-patches/)
 - [Middle-earth: Shadow of Mordor](./mesom-patches/)
 - [Middle-earth: Shadow of War](./mesow-patches/)
+- [Watch Dogs](./wd-patches/)
 
 ## Workspace
 

@@ -11,12 +11,7 @@ pub fn wait_until_ready() -> Result<(), String> {
     // Wait for game module
     tracing::info!("waiting for game module...");
     let module = offsets::GAME_MODULE.wait();
-    tracing::info!(
-        "found game module '{}' at {:#X} (size: {:#X})",
-        module.name,
-        module.base,
-        module.size
-    );
+    tracing::info!("found game module: {}", module);
 
     // Check game version
     tracing::info!("checking game version...");

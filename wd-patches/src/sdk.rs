@@ -10,7 +10,8 @@ const GAME_BINARY_TIMESTAMP: u32 = 0x5c07e8eb;
 pub fn wait_until_ready() -> Result<(), String> {
     // Wait for game module
     tracing::info!("waiting for game module...");
-    offsets::GAME_MODULE.wait();
+    let module = offsets::GAME_MODULE.wait();
+    tracing::info!("found game module: {}", module);
 
     // VMP paranoia
     thread::sleep(time::Duration::from_secs(5));

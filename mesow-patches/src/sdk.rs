@@ -1,81 +1,20 @@
-use std::{sync::OnceLock, thread, time::Duration};
-
-use libmem::Module;
+use std::{thread, time::Duration};
 
 use framework::utils::platform;
 
 pub mod offsets;
 
-const GAME_MODULE_NAME: &str = "ShadowOfWar.exe";
 const GAME_BINARY_TIMESTAMP: u32 = 0x5B7F5782;
 
-static SDK_INSTANCE: OnceLock<GameSdk> = OnceLock::new();
-
-pub struct GameSdk {
-    pub game_module: Module,
-}
-
-unsafe impl Send for GameSdk {}
-unsafe impl Sync for GameSdk {}
-
-impl GameSdk {
-    pub fn init() -> Result<(), String> {
-        let game_module = libmem::find_module(GAME_MODULE_NAME).ok_or("game module not found")?;
-
-        tracing::info!(
-            "found game module '{}' at {:#X} (size: {:#X})",
-            GAME_MODULE_NAME,
-            game_module.base,
-            game_module.size
-        );
-
-        let sdk = GameSdk { game_module };
-
-        SDK_INSTANCE
-            .set(sdk)
-            .map_err(|_| "SDK already initialized")?;
-
-        Ok(())
-    }
-
-    pub fn inst() -> &'static GameSdk {
-        SDK_INSTANCE
-            .get()
-            .expect("SDK was accessed before initialization")
-    }
-
-    /// Finds the signature in the main game module
-    pub fn find_sig(&self, signature: &str) -> Result<usize, String> {
-        let result =
-            unsafe { libmem::sig_scan(signature, self.game_module.base, self.game_module.size) };
-
-        match result {
-            Some(address) => Ok(address),
-            None => Err(format!("failed to find signature '{}'", signature)),
-        }
-    }
-}
-
 /// Blocks the caller until the game is fully ready and initialized.
-pub fn wait_until_ready(timeout: Duration) -> Result<(), String> {
-    let start = std::time::Instant::now();
-
+pub fn wait_until_ready() -> Result<(), String> {
     // Wait for game module
     tracing::info!("waiting for game module...");
-    while libmem::find_module(GAME_MODULE_NAME).is_none() {
-        if start.elapsed() >= timeout {
-            return Err("timeout while waiting for game".to_string());
-        }
+    let module = offsets::GAME_MODULE.wait();
+    tracing::info!("found game module: {}", module);
 
-        thread::sleep(std::time::Duration::from_millis(100));
-    }
-
-    // Additional wait for Shadow of War
-    thread::sleep(std::time::Duration::from_secs(3));
-
-    // Initialize SDK
-    tracing::info!("initializing sdk...");
-    GameSdk::init()?;
+    // Paranoia wait
+    thread::sleep(Duration::from_secs(5));
 
     // Check game version
     tracing::info!("checking game version...");

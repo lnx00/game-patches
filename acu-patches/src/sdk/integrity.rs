@@ -161,7 +161,7 @@ pub fn terminate_integrity_checks() -> Result<bool, String> {
     Ok(terminated_any)
 }
 
-pub fn initialize(timeout: Duration) -> Result<(), String> {
+pub fn initialize() -> Result<(), String> {
     INTEGRITY_THREAD_FOUND.store(false, Ordering::SeqCst);
 
     // Install hook
@@ -178,7 +178,7 @@ pub fn initialize(timeout: Duration) -> Result<(), String> {
     tracing::info!("waiting for new integrity check thread...");
     let start = std::time::Instant::now();
     while !INTEGRITY_THREAD_FOUND.load(Ordering::SeqCst) {
-        if start.elapsed() >= timeout {
+        if start.elapsed() >= Duration::from_secs(30) {
             return Err("timeout while waiting for integrity check".to_string());
         }
 

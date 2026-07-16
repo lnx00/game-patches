@@ -1,5 +1,3 @@
-use std::{thread, time::Duration};
-
 use framework::utils::platform;
 
 pub mod integrity;
@@ -8,12 +6,16 @@ pub mod offsets;
 const GAME_BINARY_TIMESTAMP: u32 = 0x6932E389;
 
 /// Blocks the caller until the game is fully ready and initialized.
-pub fn wait_until_ready(timeout: Duration) -> Result<(), String> {
-    let start = std::time::Instant::now();
-
+pub fn wait_until_ready() -> Result<(), String> {
     // Wait for game module
     tracing::info!("waiting for game module...");
-    offsets::GAME_MODULE.wait();
+    let module = offsets::GAME_MODULE.wait();
+    tracing::info!(
+        "found game module '{}' at {:#X} (size: {:#X})",
+        module.name,
+        module.base,
+        module.size
+    );
 
     // Check game version
     tracing::info!("checking game version...");
@@ -24,7 +26,7 @@ pub fn wait_until_ready(timeout: Duration) -> Result<(), String> {
 
     // Handle integrity checks
     tracing::info!("waiting for integrity checks...");
-    if let Err(e) = integrity::initialize(timeout - start.elapsed()) {
+    if let Err(e) = integrity::initialize() {
         tracing::warn!(
             "integrity bypass verification failed: {}. continuing anyway, but the game might crash...",
             e

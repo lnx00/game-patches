@@ -40,7 +40,7 @@ fn cleanup() {
 /// Initializes and runs all patches.
 /// Might block the caller, if hotkeys are enabled.
 fn run() -> Result<(), String> {
-    sdk::wait_until_ready(std::time::Duration::from_secs(30))?;
+    sdk::wait_until_ready()?;
 
     let mut patch_manager = PatchManager::new();
 

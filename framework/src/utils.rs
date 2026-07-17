@@ -134,6 +134,23 @@ pub fn extract_relative_target(inst: &libmem::Inst) -> Option<usize> {
     usize::try_from(target).ok()
 }
 
+/// Verbose version comparison
+pub fn check_game_version(expected: u32) -> Result<u32> {
+    if let Some(current_timestamp) = platform::get_time_date_stamp() {
+        if current_timestamp != expected {
+            bail!(
+                "timestamp mismatch (expected {}, got {})",
+                expected,
+                current_timestamp
+            );
+        }
+
+        return Ok(current_timestamp);
+    }
+
+    bail!("failed to retrieve timestamp")
+}
+
 /// Wait for a boolean to become true
 pub fn wait_until_true<F>(timeout: Duration, interval: Duration, mut cond: F) -> Result<()>
 where

@@ -1,6 +1,6 @@
 use std::{thread, time};
 
-use framework::utils::platform;
+use framework::utils;
 
 pub mod offsets;
 
@@ -18,9 +18,9 @@ pub fn wait_until_ready() -> Result<(), String> {
 
     // Check game version
     tracing::info!("checking game version...");
-    match check_game_version() {
+    match utils::check_game_version(GAME_BINARY_TIMESTAMP) {
         Ok(version) => tracing::info!("game version ({:X}) validated", version),
-        Err(e) => tracing::warn!("failed to check game version: {}", e),
+        Err(e) => tracing::warn!("failed to check game version: {:#}", e),
     }
 
     Ok(())
@@ -28,19 +28,4 @@ pub fn wait_until_ready() -> Result<(), String> {
 
 pub fn cleanup() -> Result<(), String> {
     Ok(())
-}
-
-pub fn check_game_version() -> Result<u32, String> {
-    if let Some(current_timestamp) = platform::get_time_date_stamp() {
-        if current_timestamp != GAME_BINARY_TIMESTAMP {
-            return Err(format!(
-                "timestamp mismatch - expected {}, got {}",
-                GAME_BINARY_TIMESTAMP, current_timestamp
-            ));
-        }
-
-        return Ok(current_timestamp);
-    }
-
-    Err("failed to retrieve timestamp".to_string())
 }

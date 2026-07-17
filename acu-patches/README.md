@@ -22,6 +22,20 @@ with any other mod, you can choose an alternative DLL [here](https://github.com/
 You can configure the mod by placing a `acu_patches.toml` file next to `acu_patches.asi` in the `plugins` folder.
 An example configuration file can be found [here](./config/acu_patches.toml).
 
+## Building
+
+Build the standalone plugin:
+
+```bash
+cargo build
+```
+
+Build the ACUFixes plugin:
+
+```bash
+cargo build --features plugin
+```
+
 ## Credits
 
 - [libmem by rdbo](https://github.com/rdbo/libmem)

@@ -112,6 +112,7 @@ impl ACUPluginLoaderInterface {
         }
 
         let subscriber = tracing_subscriber::fmt()
+            .with_ansi(false)
             .with_writer(ImGuiMakeWriter)
             .finish();
 

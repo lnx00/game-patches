@@ -1,4 +1,5 @@
-pub mod logging;
+pub mod byte_patch;
+pub mod lazy;
 pub mod platform;
 
 use std::{ffi::c_void, sync::LazyLock};

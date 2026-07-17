@@ -1,13 +1,13 @@
-pub mod byte_patch;
 pub mod config;
+pub mod logging;
 pub mod manager;
 pub mod patch;
-pub mod lazy;
 pub mod utils;
 
-pub use byte_patch::{BytePatch, BytePatchNt};
 pub use config::Config;
+pub use logging::init_logger;
 pub use manager::PatchManager;
 pub use patch::Patch;
-pub use lazy::{LazyModule, LazySignature};
-pub use utils::{logging::init_logger, patch_bytes, patch_bytes_nt};
+pub use utils::{
+    byte_patch::BytePatch, byte_patch::BytePatchNt, lazy::LazyModule, lazy::LazySignature,
+};

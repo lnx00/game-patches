@@ -1,3 +1,4 @@
+use anyhow::{Result, bail};
 use framework::utils::platform;
 
 pub mod integrity;
@@ -17,14 +18,14 @@ pub fn wait_until_ready() -> Result<(), String> {
     tracing::info!("checking game version...");
     match check_game_version() {
         Ok(version) => tracing::info!("game version ({:X}) validated", version),
-        Err(e) => tracing::warn!("failed to check game version: {}", e),
+        Err(e) => tracing::warn!("failed to check game version: {:#}", e),
     }
 
     // Handle integrity checks
     tracing::info!("waiting for integrity checks...");
     if let Err(e) = integrity::initialize() {
         tracing::warn!(
-            "integrity bypass verification failed: {}. continuing anyway, but the game might crash...",
+            "Integrity bypass verification failed: {:#}. Continuing anyway, but the game might crash...",
             e
         );
     }
@@ -32,22 +33,23 @@ pub fn wait_until_ready() -> Result<(), String> {
     Ok(())
 }
 
-pub fn cleanup() -> Result<(), String> {
+pub fn cleanup() -> Result<()> {
     tracing::info!("uninstalling integrity hook...");
     integrity::IntegrityHook::inst().cleanup()
 }
 
-pub fn check_game_version() -> Result<u32, String> {
+pub fn check_game_version() -> Result<u32> {
     if let Some(current_timestamp) = platform::get_time_date_stamp() {
         if current_timestamp != GAME_BINARY_TIMESTAMP {
-            return Err(format!(
-                "timestamp mismatch - expected {}, got {}",
-                GAME_BINARY_TIMESTAMP, current_timestamp
-            ));
+            bail!(
+                "timestamp mismatch (expected {}, got {})",
+                GAME_BINARY_TIMESTAMP,
+                current_timestamp
+            );
         }
 
         return Ok(current_timestamp);
     }
 
-    Err("failed to retrieve timestamp".to_string())
+    bail!("failed to retrieve timestamp")
 }

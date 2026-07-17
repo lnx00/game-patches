@@ -6,10 +6,10 @@ use std::{
         LazyLock, Mutex, MutexGuard, OnceLock, RwLock,
         atomic::{AtomicBool, Ordering},
     },
-    thread,
     time::Duration,
 };
 
+use anyhow::{Context, Result};
 use framework::utils;
 use windows::{
     Wdk::System::Threading::{NtQueryInformationThread, ThreadQuerySetWin32StartAddress},
@@ -134,11 +134,11 @@ fn check_thread(thread_id: u32) -> Result<bool, String> {
 
 /// Searches for the integrity check thread and tries to terminate it.
 /// Returns Ok(true), if at least one thread has been successfully terminated.
-pub fn terminate_integrity_checks() -> Result<bool, String> {
+pub fn terminate_integrity_checks() -> Result<bool> {
     let process_id = libmem::get_process()
-        .ok_or("failed to get current process")?
+        .context("failed to get current process")?
         .pid;
-    let thread_list = libmem::enum_threads().ok_or("failed to enumerate threads")?;
+    let thread_list = libmem::enum_threads().context("failed to enumerate threads")?;
     let mut terminated_any = false;
 
     // Check all thread of the current process
@@ -163,7 +163,7 @@ pub fn terminate_integrity_checks() -> Result<bool, String> {
     Ok(terminated_any)
 }
 
-pub fn initialize() -> Result<(), String> {
+pub fn initialize() -> Result<()> {
     INTEGRITY_THREAD_FOUND.store(false, Ordering::SeqCst);
 
     // Install hook
@@ -178,14 +178,10 @@ pub fn initialize() -> Result<(), String> {
 
     // Wait until the thread was killed...
     tracing::info!("waiting for new integrity check thread...");
-    let start = std::time::Instant::now();
-    while !INTEGRITY_THREAD_FOUND.load(Ordering::SeqCst) {
-        if start.elapsed() >= Duration::from_secs(30) {
-            return Err("timeout while waiting for integrity check".to_string());
-        }
-
-        thread::sleep(Duration::from_millis(10));
-    }
+    utils::wait_until_true(Duration::from_secs(30), Duration::from_millis(10), || {
+        INTEGRITY_THREAD_FOUND.load(Ordering::SeqCst)
+    })
+    .context("failed to wait for integrity check thread")?;
 
     Ok(())
 }
@@ -214,7 +210,7 @@ impl IntegrityHook {
         INSTANCE.lock().unwrap()
     }
 
-    pub fn apply(&mut self) -> Result<(), String> {
+    pub fn apply(&mut self) -> Result<()> {
         if self.trampoline.is_some() {
             return Ok(());
         }
@@ -223,7 +219,7 @@ impl IntegrityHook {
             let hook_address = Self::hk_create_thread as *mut c_void as usize;
 
             let trampoline = libmem::hook_code(self.target_address, hook_address)
-                .ok_or("failed to hook CreateThread")?;
+                .context("failed to hook CreateThread")?;
 
             let _ = ORIG_CREATE_THREAD.set(trampoline.callable::<CreateThreadFn>());
             self.trampoline = Some(trampoline);
@@ -232,10 +228,11 @@ impl IntegrityHook {
         Ok(())
     }
 
-    pub fn cleanup(&mut self) -> Result<(), String> {
+    pub fn cleanup(&mut self) -> Result<()> {
         if let Some(trampoline) = self.trampoline.take() {
             unsafe {
-                libmem::unhook_code(self.target_address, trampoline);
+                libmem::unhook_code(self.target_address, trampoline)
+                    .context("failed to unhook CreateThread")?;
             }
         }
 

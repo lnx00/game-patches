@@ -2,7 +2,12 @@ pub mod byte_patch;
 pub mod lazy;
 pub mod platform;
 
-use std::{ffi::c_void, sync::LazyLock};
+use std::{
+    ffi::c_void,
+    sync::LazyLock,
+    thread,
+    time::{Duration, Instant},
+};
 
 use anyhow::{Context, Result, bail};
 use windows::{
@@ -127,4 +132,22 @@ pub fn extract_relative_target(inst: &libmem::Inst) -> Option<usize> {
     };
 
     usize::try_from(target).ok()
+}
+
+/// Wait for a boolean to become true
+pub fn wait_until_true<F>(timeout: Duration, interval: Duration, mut cond: F) -> Result<()>
+where
+    F: FnMut() -> bool,
+{
+    let start = Instant::now();
+
+    while start.elapsed() < timeout {
+        if cond() {
+            return Ok(());
+        }
+
+        thread::sleep(interval);
+    }
+
+    bail!("timeout")
 }

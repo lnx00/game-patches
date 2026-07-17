@@ -1,3 +1,4 @@
+use anyhow::Result;
 use framework::utils::platform;
 
 pub mod integrity;
@@ -31,7 +32,7 @@ pub fn wait_until_ready() -> Result<(), String> {
     Ok(())
 }
 
-pub fn cleanup() -> Result<(), String> {
+pub fn cleanup() -> Result<()> {
     tracing::info!("uninstalling integrity hook...");
     integrity::IntegrityHook::inst().cleanup()
 }

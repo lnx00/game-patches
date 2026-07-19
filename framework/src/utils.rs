@@ -135,13 +135,13 @@ pub fn extract_relative_target(inst: &libmem::Inst) -> Option<usize> {
 }
 
 /// Verbose version comparison
-pub fn check_game_version(expected: u32) -> Result<u32> {
+pub fn check_game_version(expected: &[u32]) -> Result<u32> {
     if let Some(current_timestamp) = platform::get_time_date_stamp() {
-        if current_timestamp != expected {
+        if !expected.contains(&current_timestamp) {
             bail!(
-                "timestamp mismatch (expected {}, got {})",
-                expected,
-                current_timestamp
+                "timestamp mismatch (got {:#X}, expected one of {:x?})",
+                current_timestamp,
+                expected
             );
         }
 

@@ -1,5 +1,5 @@
-use anyhow::Result;
-use framework::{BytePatch, Patch};
+use anyhow::{Context, Result, ensure};
+use framework::{BytePatch, Patch, utils};
 
 use crate::sdk::offsets;
 
@@ -28,16 +28,32 @@ impl Patch for UniformCameraSpeed {
     where
         Self: Sized,
     {
-        let target_address = offsets::LOAD_X_AXIS_FACTOR.get()?;
+        let load_x_addr = offsets::LOAD_X_AXIS_FACTOR.get()?;
+        let load_y_addr = load_x_addr + 0x8;
+
+        let load_y_inst = unsafe { libmem::disassemble(load_y_addr) }
+            .context("failed to disassemble y-factor instruction")?;
+
+        ensure!(
+            load_y_inst.mnemonic == "movss",
+            "unexpected mnemonic: {}",
+            load_y_inst.mnemonic
+        );
+
+        let y_displacement = utils::extract_displacement(&load_y_inst)
+            .context("failed to extract displacement")? as i32;
+
+        let x_displacement = y_displacement + 0x8;
+        let [b0, b1, b2, b3] = x_displacement.to_le_bytes();
 
         let patch_bytes: [u8; 8] = [
-            0xF3, 0x0F, 0x10, 0x0D, 0x4C, 0xC1, 0x29,
-            0x01, // movss xmm1, dword ptr cs:const_flt_105
+            0xF3, 0x0F, 0x10, 0x0D, // movss xmm1, [rip + ...]
+            b0, b1, b2, b3,
         ];
 
-        let byte_patch = BytePatch::new(target_address, patch_bytes);
-
-        Ok(Box::new(UniformCameraSpeed { byte_patch }))
+        Ok(Box::new(UniformCameraSpeed {
+            byte_patch: BytePatch::new(load_x_addr, patch_bytes),
+        }))
     }
 
     fn apply(&mut self) -> Result<()> {

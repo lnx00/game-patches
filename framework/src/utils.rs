@@ -103,35 +103,40 @@ pub fn patch_bytes_nt(address: usize, bytes: &[u8]) -> Result<()> {
     Ok(())
 }
 
-/// Extract the relative target address (jmp or call)
-pub fn extract_relative_target(inst: &libmem::Inst) -> Option<usize> {
-    let next_address = inst.address as i64 + inst.bytes.len() as i64;
-
-    let target = match inst.bytes.as_slice() {
+pub fn extract_displacement(inst: &libmem::Inst) -> Option<isize> {
+    match inst.bytes.as_slice() {
         // call & jmp (rel32)
         [0xE8 | 0xE9, displacement @ ..] if displacement.len() == 4 => {
-            let displacement = i32::from_le_bytes(displacement.try_into().ok()?) as i64;
-            next_address.checked_add(displacement)?
+            Some(i32::from_le_bytes(displacement.try_into().ok()?) as isize)
         }
 
         // jmp (rel8)
-        [0xEB, displacement] => {
-            let displacement = i8::from_le_bytes([*displacement]) as i64;
-            next_address.checked_add(displacement)?
-        }
+        [0xEB, displacement] => Some(*displacement as i8 as isize),
 
         // mov r64, [rip + disp32] & mov [rip + disp32], r64
         [0x48, 0x89 | 0x8B, modrm, displacement @ ..]
             if (modrm & 0xC7) == 0x05 && displacement.len() == 4 =>
         {
-            let displacement = i32::from_le_bytes(displacement.try_into().ok()?) as i64;
-            next_address.checked_add(displacement)?
+            Some(i32::from_le_bytes(displacement.try_into().ok()?) as isize)
         }
 
-        _ => return None,
-    };
+        // movss xmm, [rip + disp32] & movss [rip + disp32], xmm
+        [0xF3, 0x0F, 0x10 | 0x11, modrm, displacement @ ..]
+            if (modrm & 0xC7) == 0x05 && displacement.len() == 4 =>
+        {
+            Some(i32::from_le_bytes(displacement.try_into().ok()?) as isize)
+        }
 
-    usize::try_from(target).ok()
+        _ => None,
+    }
+}
+
+/// Resolves the relative target and returns the absolute address
+pub fn resolve_relative_target(inst: &libmem::Inst) -> Option<usize> {
+    let displacement = extract_displacement(inst)?;
+    let next_address = inst.address + inst.bytes.len();
+
+    next_address.checked_add_signed(displacement)
 }
 
 /// Verbose version comparison

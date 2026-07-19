@@ -7,13 +7,13 @@ use framework::{BytePatchNt, Patch};
     the corresponding function call.
 
     There is also a maximum limit for the camera delta movement. This
-    can be disabled by patching out the condition that checks the
+    can be disabled by patching skipping the condition that checks the
     delta vector magnitude.
 */
 
 pub struct DisableMouseAccel {
     byte_patch_accel: BytePatchNt<5>,
-    byte_patch_clamp: BytePatchNt<6>,
+    byte_patch_clamp: BytePatchNt<2>,
 }
 
 impl Patch for DisableMouseAccel {
@@ -39,10 +39,9 @@ impl Patch for DisableMouseAccel {
             0x90, 0x90, 0x90, 0x90, 0x90, // nop
         ];
 
-        // TODO: Extract the jump target dynamically
         let patch_bytes_clamp: [u8; _] = [
-            0xE9, 0x93, 0x00, 0x00, 0x00, // jmp 0x93
             0x90, // nop
+            0xE9, // jmp
         ];
 
         Ok(Box::new(Self {

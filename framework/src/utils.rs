@@ -113,6 +113,11 @@ pub fn extract_displacement(inst: &libmem::Inst) -> Option<isize> {
         // jmp (rel8)
         [0xEB, displacement] => Some(*displacement as i8 as isize),
 
+        // jcc (rel32)
+        [0x0F, op, displacement @ ..] if (0x80..=0x8F).contains(op) && displacement.len() == 4 => {
+            Some(i32::from_le_bytes(displacement.try_into().ok()?) as isize)
+        }
+
         // mov r64, [rip + disp32] & mov [rip + disp32], r64
         [0x48, 0x89 | 0x8B, modrm, displacement @ ..]
             if (modrm & 0xC7) == 0x05 && displacement.len() == 4 =>

@@ -7,8 +7,9 @@ use windows::Win32::{
     },
 };
 
-use framework::{PatchManager, utils::platform};
 use crate::config::CONFIG;
+use anyhow::Result;
+use framework::{PatchManager, utils::platform};
 
 mod config;
 mod patches;
@@ -39,7 +40,7 @@ fn cleanup() {
 
 /// Initializes and runs all patches.
 /// Might block the caller, if hotkeys are enabled.
-fn run() -> Result<(), String> {
+fn run() -> Result<()> {
     sdk::wait_until_ready()?;
 
     let mut patch_manager = PatchManager::new();
@@ -82,8 +83,8 @@ fn main_thread() {
 
     // Run main logic
     if let Err(e) = run() {
-        tracing::error!("Error: {}", e);
-        platform::msg_box(&e, "Error", platform::MsgBoxType::Error);
+        tracing::error!("Fatal error: {:#}", e);
+        platform::msg_box(&format!("{:#}", e), "Error", platform::MsgBoxType::Error);
     }
 
     // Detach console

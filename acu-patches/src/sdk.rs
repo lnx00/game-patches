@@ -8,7 +8,7 @@ pub mod structs;
 const GAME_BINARY_TIMESTAMPS: &[u32] = &[0x54DB5826];
 
 /// Blocks the caller until the game is fully ready and initialized.
-pub fn wait_until_ready() -> Result<(), String> {
+pub fn wait_until_ready() -> Result<()> {
     // Wait for game module
     tracing::info!("waiting for game module...");
     let module = offsets::GAME_MODULE.wait();

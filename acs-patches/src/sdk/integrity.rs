@@ -9,7 +9,7 @@ use std::{
     time::Duration,
 };
 
-use anyhow::{Context, Result};
+use anyhow::{Context, Result, bail};
 use framework::utils;
 use windows::{
     Wdk::System::Threading::{NtQueryInformationThread, ThreadQuerySetWin32StartAddress},
@@ -96,13 +96,12 @@ fn analyze_thread_start(start_address: usize) -> Option<bool> {
     }
 }
 
-fn check_thread(thread_id: u32) -> Result<bool, String> {
+fn check_thread(thread_id: u32) -> Result<bool> {
     unsafe {
         let mut thread_start_address = 0x0;
 
         // Get a handle to the thread
-        let thread_handle = OpenThread(THREAD_ALL_ACCESS, false, thread_id)
-            .map_err(|_| "failed to open thread handle")?;
+        let thread_handle = OpenThread(THREAD_ALL_ACCESS, false, thread_id)?;
 
         // Query the thread start address
         let nt_status = NtQueryInformationThread(
@@ -115,10 +114,7 @@ fn check_thread(thread_id: u32) -> Result<bool, String> {
 
         if nt_status.is_err() {
             let _ = CloseHandle(thread_handle);
-            return Err(format!(
-                "failed to query thread information: {:?}",
-                nt_status
-            ));
+            bail!("failed to query thread information: {:?}", nt_status);
         }
 
         let is_integrity_thread = analyze_thread_start(thread_start_address) == Some(true);

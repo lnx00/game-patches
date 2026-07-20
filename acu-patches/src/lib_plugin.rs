@@ -1,11 +1,12 @@
 mod plugin;
 
 use crate::{config::CONFIG, patches};
+use anyhow::Result;
 use framework::PatchManager;
 use plugin::{ACUPluginInfo, ACUPluginLoaderInterface, PLUGIN_API_VERSION, make_version};
 use windows::Win32::Foundation::HINSTANCE;
 
-fn run() -> Result<(), String> {
+fn run() -> Result<()> {
     let mut patch_manager = PatchManager::new();
 
     tracing::info!("initializing patches...");

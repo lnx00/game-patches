@@ -1,5 +1,6 @@
 use std::{thread, time::Duration};
 
+use anyhow::Result;
 use framework::utils;
 
 pub mod offsets;
@@ -7,7 +8,7 @@ pub mod offsets;
 const GAME_BINARY_TIMESTAMPS: &[u32] = &[0x5B7F5782];
 
 /// Blocks the caller until the game is fully ready and initialized.
-pub fn wait_until_ready() -> Result<(), String> {
+pub fn wait_until_ready() -> Result<()> {
     // Wait for game module
     tracing::info!("waiting for game module...");
     let module = offsets::GAME_MODULE.wait();
@@ -26,6 +27,6 @@ pub fn wait_until_ready() -> Result<(), String> {
     Ok(())
 }
 
-pub fn cleanup() -> Result<(), String> {
+pub fn cleanup() -> Result<()> {
     Ok(())
 }

@@ -49,7 +49,7 @@ static INTEGRITY_THREAD_FOUND: AtomicBool = AtomicBool::new(false);
 /// Analyzes the thread start code and checks if it is the integrity thread
 fn analyze_thread_start(start_address: usize) -> Option<bool> {
     unsafe {
-        tracing::debug!("analyzing thread {:X}...", start_address);
+        tracing::debug!("Analyzing thread {:X}...", start_address);
 
         // Try to get cached verdict with read lock
         if let Some(verdict) = INTEGRITY_THREAD_VERDICTS
@@ -58,7 +58,7 @@ fn analyze_thread_start(start_address: usize) -> Option<bool> {
             .get(&start_address)
             .copied()
         {
-            tracing::debug!("cached verdict for thread {:X}: {}", start_address, verdict);
+            tracing::debug!("Cached verdict for thread {:X}: {}", start_address, verdict);
             return Some(verdict);
         }
 
@@ -67,7 +67,7 @@ fn analyze_thread_start(start_address: usize) -> Option<bool> {
 
             let mnemonic = inst.mnemonic.to_lowercase();
             if mnemonic != "jmp" && mnemonic != "call" {
-                tracing::debug!("first inst was not a jump or call");
+                tracing::debug!("First inst was not a jump or call");
                 INTEGRITY_THREAD_VERDICTS
                     .write()
                     .unwrap()
@@ -76,7 +76,7 @@ fn analyze_thread_start(start_address: usize) -> Option<bool> {
             }
 
             let target_addr = utils::resolve_relative_target(&inst)?;
-            tracing::debug!("target addr of {}: {:#x}", mnemonic, target_addr);
+            tracing::debug!("Target addr of {}: {:#x}", mnemonic, target_addr);
 
             let in_range = section_range.contains(&target_addr);
 
@@ -85,7 +85,7 @@ fn analyze_thread_start(start_address: usize) -> Option<bool> {
                 .unwrap()
                 .insert(start_address, in_range);
 
-            tracing::debug!("verdict for thread {:X}: {}", start_address, in_range);
+            tracing::debug!("Verdict for thread {:X}: {}", start_address, in_range);
 
             return Some(in_range);
         }
@@ -118,7 +118,7 @@ fn check_thread(thread_id: u32) -> Result<bool> {
         let is_integrity_thread = analyze_thread_start(thread_start_address) == Some(true);
         if is_integrity_thread {
             let _ = TerminateThread(thread_handle, 0x0);
-            tracing::debug!("terminated integrity check thread: {:X}", thread_id);
+            tracing::debug!("Terminated integrity check thread: {:X}", thread_id);
         }
 
         let _ = CloseHandle(thread_handle);
@@ -141,12 +141,12 @@ pub fn terminate_integrity_checks() -> Result<bool> {
             let check_result = check_thread(thread.tid);
             match check_result {
                 Ok(true) => {
-                    tracing::info!("terminated integrity check thread: {:X}", thread.tid);
+                    tracing::info!("Terminated integrity check thread: {:X}", thread.tid);
                     terminated_any = true;
                 }
 
                 Err(e) => {
-                    tracing::warn!("cannot check thread {:X}: {}", thread.tid, e);
+                    tracing::warn!("Cannot check thread {:X}: {}", thread.tid, e);
                 }
 
                 _ => {}
@@ -161,17 +161,17 @@ pub fn initialize() -> Result<()> {
     INTEGRITY_THREAD_FOUND.store(false, Ordering::SeqCst);
 
     // Install hook
-    tracing::info!("installing CreateThread hook...");
+    tracing::info!("Installing CreateThread hook...");
     IntegrityHook::inst().apply()?;
 
     // Terminate running threads
-    tracing::info!("terminating existing integrity checks...");
+    tracing::info!("Terminating existing integrity checks...");
     if terminate_integrity_checks()? {
         return Ok(());
     }
 
     // Wait until the thread was killed...
-    tracing::info!("waiting for new integrity check thread...");
+    tracing::info!("Waiting for new integrity check thread...");
     utils::wait_until_true(Duration::from_secs(30), Duration::from_millis(10), || {
         INTEGRITY_THREAD_FOUND.load(Ordering::SeqCst)
     })

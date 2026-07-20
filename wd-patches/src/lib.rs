@@ -25,17 +25,17 @@ static PATCH_MANAGER: RwLock<Option<PatchManager>> = RwLock::new(None);
 
 /// Tries to clean everything up for safe unloading
 fn cleanup() {
-    tracing::info!("reverting patches...");
+    tracing::info!("Reverting patches...");
     if let Some(mut pm) = PATCH_MANAGER.write().unwrap().take() {
         pm.revert_all();
     }
 
-    tracing::info!("cleaning up sdk...");
+    tracing::info!("Cleaning up sdk...");
     if let Err(e) = sdk::cleanup() {
-        tracing::error!("failed to cleanup sdk: {}", e);
+        tracing::error!("Failed to cleanup sdk: {:#}", e);
     }
 
-    tracing::info!("cleanup done!");
+    tracing::info!("Cleanup done!");
 }
 
 /// Initializes and runs all patches.
@@ -45,17 +45,17 @@ fn run() -> Result<()> {
 
     let mut patch_manager = PatchManager::new();
 
-    tracing::info!("initializing patches...");
+    tracing::info!("Initializing patches...");
     patches::register_all(&mut patch_manager);
 
-    tracing::info!("applying patches...");
+    tracing::info!("Applying patches...");
     patch_manager.apply_all(&CONFIG);
 
     *PATCH_MANAGER.write().unwrap() = Some(patch_manager);
 
     // Wait for unload, if enabled
     if CONFIG.allow_unloading {
-        tracing::info!("patches ready! press F11 to unload.");
+        tracing::info!("Patches ready! press F11 to unload.");
         while !platform::is_button_down(VK_F11) {
             thread::sleep(std::time::Duration::from_millis(100));
         }
@@ -63,7 +63,7 @@ fn run() -> Result<()> {
         tracing::info!("F11 pressed! cleaning up...");
         cleanup();
     } else {
-        tracing::info!("patches ready!");
+        tracing::info!("Patches ready!");
     }
 
     Ok(())
@@ -78,7 +78,7 @@ fn main_thread() {
         let title = format!("{} v{} by {}", PKG_NAME, PKG_VERSION, PKG_AUTHORS);
         platform::attach_console(&title);
         let _ = enable_ansi_support::enable_ansi_support();
-        tracing::info!("running {}", title);
+        tracing::info!("Running {}", title);
     }
 
     // Run main logic

@@ -9,20 +9,20 @@ use windows::Win32::Foundation::HINSTANCE;
 fn run() -> Result<()> {
     let mut patch_manager = PatchManager::new();
 
-    tracing::info!("initializing patches...");
+    tracing::info!("Initializing patches...");
     patches::register_all(&mut patch_manager);
 
-    tracing::info!("applying patches...");
+    tracing::info!("Applying patches...");
     patch_manager.apply_all(&CONFIG);
 
-    tracing::info!("patches ready!");
+    tracing::info!("Patches ready!");
 
     Ok(())
 }
 
 extern "C" fn init_patches(_plugin_loader: &ACUPluginLoaderInterface) -> bool {
     if let Err(e) = run() {
-        tracing::error!("{e}");
+        tracing::error!("Fatal error: {:#}", e);
     }
 
     true

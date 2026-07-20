@@ -27,10 +27,10 @@ impl PatchManager {
                     is_applied: false,
                 });
 
-                tracing::info!("registered patch '{}'", P::name());
+                tracing::info!("Registered patch '{}'", P::name());
             }
             Err(e) => {
-                tracing::error!("failed to register patch '{}': {}", P::name(), e);
+                tracing::error!("Failed to register patch '{}': {:#}", P::name(), e);
             }
         };
     }
@@ -43,21 +43,21 @@ impl PatchManager {
             };
 
             if !enabled {
-                tracing::info!("skipping patch '{}' (disabled)", managed.name);
+                tracing::info!("Skipping patch '{}' (disabled)", managed.name);
                 continue;
             }
 
             if managed.is_applied {
-                tracing::info!("skipping patch '{}' (already applied)", managed.name);
+                tracing::info!("Skipping patch '{}' (already applied)", managed.name);
                 continue;
             }
 
             match managed.patch.apply() {
                 Ok(_) => {
-                    tracing::info!("applied patch '{}'", managed.name);
+                    tracing::info!("Applied patch '{}'", managed.name);
                     managed.is_applied = true;
                 }
-                Err(e) => tracing::error!("failed to apply patch '{}': {}", managed.name, e),
+                Err(e) => tracing::error!("Failed to apply patch '{}': {:#}", managed.name, e),
             }
         }
     }
@@ -67,10 +67,10 @@ impl PatchManager {
             if managed.is_applied {
                 match managed.patch.revert() {
                     Ok(_) => {
-                        tracing::info!("reverted patch '{}'", managed.name);
+                        tracing::info!("Reverted patch '{}'", managed.name);
                         managed.is_applied = false;
                     }
-                    Err(e) => tracing::error!("failed to revert patch '{}': {}", managed.name, e),
+                    Err(e) => tracing::error!("Failed to revert patch '{}': {:#}", managed.name, e),
                 }
             }
         }

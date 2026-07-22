@@ -4,21 +4,21 @@ Quality-of-life patches for the game "Watch Dogs".
 
 ## Features
 
-- **Disable mouse acceleration:** Disables the weird mouse acceleration/decceleration, which was intended for analog sticks.
+- **Disable mouse acceleration:** Disables the mouse acceleration and maximum camera turn speed.
 
 ## Installation
 
 1. Download and extract the latest mod files (`wd-patches-aio.zip`).
-2. Copy **all** extracted files and folders (`dinput8.dll`, `plugins/...`) to your game binary folder (`Watch_Dogs/bin/`).
+2. Copy **all** extracted files and folders (`dsound.dll`, `plugins/...`) to your game binary folder (`Watch_Dogs/bin/`).
 3. Run the game and enjoy!
 
-The mod files contain an ASI loader that will automatically load the mod DLL when launching the game. If the `dinput8.dll` file conflicts
+The mod files contain an ASI loader that will automatically load the mod DLL when launching the game. If the `dsound.dll` file conflicts
 with any other mod, you can choose an alternative DLL [here](https://github.com/ThirteenAG/Ultimate-ASI-Loader/releases/latest/).
 
 ## Uninstallation
 
 1. Navigate to your game binary folder (`Watch_Dogs/bin/`).
-2. Delete the `dinput8.dll` file and the `plugins` folder (or just the specific `wd_patches` files inside it if you have other plugins).
+2. Delete the `dsound.dll` file and the `plugins` folder (or just the specific `wd_patches` files inside it if you have other plugins).
 
 ## Configuration
 

@@ -30,11 +30,6 @@ fn cleanup() {
         pm.revert_all();
     }
 
-    tracing::info!("Cleaning up sdk...");
-    if let Err(e) = sdk::cleanup() {
-        tracing::error!("Failed to cleanup sdk: {:#}", e);
-    }
-
     tracing::info!("Cleanup done!");
 }
 

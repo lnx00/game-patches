@@ -146,7 +146,7 @@ pub fn terminate_integrity_checks() -> Result<bool> {
                 }
 
                 Err(e) => {
-                    tracing::warn!("Cannot check thread {:X}: {}", thread.tid, e);
+                    tracing::warn!("Cannot check thread {:X}: {:#}", thread.tid, e);
                 }
 
                 _ => {}

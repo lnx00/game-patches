@@ -2,10 +2,6 @@ use crate::{config::CONFIG, patches, sdk};
 use anyhow::Result;
 use framework::{PatchManager, utils::platform};
 use std::{sync::RwLock, thread};
-use windows::Win32::{
-    Foundation::HINSTANCE,
-    System::{LibraryLoader::DisableThreadLibraryCalls, SystemServices::DLL_PROCESS_ATTACH},
-};
 
 const PKG_NAME: &str = env!("CARGO_PKG_NAME");
 const PKG_VERSION: &str = env!("CARGO_PKG_VERSION");
@@ -85,15 +81,4 @@ fn main_thread() {
     }
 }
 
-#[unsafe(no_mangle)]
-#[allow(non_snake_case)]
-extern "system" fn DllMain(dll_module: HINSTANCE, call_reason: u32, _reserved: *mut ()) -> bool {
-    if call_reason == DLL_PROCESS_ATTACH {
-        unsafe {
-            let _ = DisableThreadLibraryCalls(dll_module.into());
-        }
-        thread::spawn(main_thread);
-    }
-
-    true
-}
+framework::dll_main!(main_thread);

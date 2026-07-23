@@ -1,8 +1,4 @@
 use std::{sync::RwLock, thread};
-use windows::Win32::{
-    Foundation::HINSTANCE,
-    System::{LibraryLoader::DisableThreadLibraryCalls, SystemServices::DLL_PROCESS_ATTACH},
-};
 
 use crate::config::CONFIG;
 use anyhow::Result;
@@ -90,15 +86,4 @@ fn main_thread() {
     }
 }
 
-#[unsafe(no_mangle)]
-#[allow(non_snake_case)]
-extern "system" fn DllMain(dll_module: HINSTANCE, call_reason: u32, _reserved: *mut ()) -> bool {
-    if call_reason == DLL_PROCESS_ATTACH {
-        unsafe {
-            let _ = DisableThreadLibraryCalls(dll_module.into());
-        }
-        thread::spawn(main_thread);
-    }
-
-    true
-}
+framework::dll_main!(main_thread);

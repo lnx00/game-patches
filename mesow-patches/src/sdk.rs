@@ -26,7 +26,3 @@ pub fn wait_until_ready() -> Result<()> {
 
     Ok(())
 }
-
-pub fn cleanup() -> Result<()> {
-    Ok(())
-}

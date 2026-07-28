@@ -5,7 +5,7 @@ pub mod integrity;
 pub mod offsets;
 pub mod structs;
 
-const GAME_BINARY_TIMESTAMPS: &[u32] = &[0x54DB5826];
+const GAME_BINARY_TIMESTAMPS: &[u32] = &[0x54DB5826, 0x69945EEF];
 
 /// Blocks the caller until the game is fully ready and initialized.
 pub fn wait_until_ready() -> Result<()> {

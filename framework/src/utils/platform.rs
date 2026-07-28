@@ -1,4 +1,8 @@
+use anyhow::{Result, bail};
+use std::ffi::c_void;
 use std::ops::Range;
+use std::sync::LazyLock;
+use windows::Win32::Foundation::CloseHandle;
 
 use windows::Win32::System::Console::{AllocConsole, FreeConsole, SetConsoleTitleW};
 use windows::Win32::System::Diagnostics::Debug::{
@@ -8,9 +12,37 @@ use windows::Win32::System::LibraryLoader::GetModuleHandleW;
 use windows::Win32::System::SystemServices::{
     IMAGE_DOS_HEADER, IMAGE_DOS_SIGNATURE, IMAGE_NT_SIGNATURE,
 };
+use windows::Win32::System::Threading::{GetCurrentProcessId, OpenProcess, PROCESS_VM_OPERATION};
 use windows::Win32::UI::Input::KeyboardAndMouse::GetAsyncKeyState;
 use windows::Win32::UI::WindowsAndMessaging::*;
 use windows::core::{HSTRING, PCWSTR};
+use windows::{
+    Win32::{
+        Foundation::{HANDLE, NTSTATUS},
+        System::{
+            LibraryLoader::{GetModuleHandleA, GetProcAddress},
+            Memory::PAGE_PROTECTION_FLAGS,
+        },
+    },
+    core::s,
+};
+
+type NtProtectVirtualMemoryFn = unsafe extern "system" fn(
+    process_handle: HANDLE,
+    base_address: *mut *mut c_void,
+    region_size: *mut usize,
+    new_protect: PAGE_PROTECTION_FLAGS,
+    old_protect: *mut PAGE_PROTECTION_FLAGS,
+) -> NTSTATUS;
+
+static NT_PROTECT_VIRTUAL_MEMORY: LazyLock<NtProtectVirtualMemoryFn> = LazyLock::new(|| unsafe {
+    let ntdll = GetModuleHandleA(s!("ntdll.dll")).unwrap();
+
+    let fn_ptr = GetProcAddress(ntdll, s!("NtProtectVirtualMemory")).unwrap();
+    let func: NtProtectVirtualMemoryFn = std::mem::transmute(fn_ptr);
+
+    func
+});
 
 #[allow(dead_code)]
 pub enum MsgBoxType {
@@ -138,4 +170,35 @@ pub fn find_section_address_range(section_name: &str) -> Option<Range<usize>> {
     }
 
     None
+}
+
+/// Changes the memory protection using native functions and returns the old protection.
+pub fn prot_memory_native(
+    address: usize,
+    size: usize,
+    prot: PAGE_PROTECTION_FLAGS,
+) -> Result<PAGE_PROTECTION_FLAGS> {
+    unsafe {
+        let process_id = GetCurrentProcessId();
+        let process_handle = OpenProcess(PROCESS_VM_OPERATION, false, process_id)?;
+
+        let mut base_address = address as *mut c_void;
+        let mut region_size = size;
+        let mut old_protect = PAGE_PROTECTION_FLAGS(0);
+
+        let status = NT_PROTECT_VIRTUAL_MEMORY(
+            process_handle,
+            &mut base_address,
+            &mut region_size,
+            prot,
+            &mut old_protect,
+        );
+        let _ = CloseHandle(process_handle);
+
+        if status.is_err() {
+            bail!("NtProtectVirtualMemory failed with status: {:#X}", status.0)
+        }
+
+        Ok(old_protect)
+    }
 }

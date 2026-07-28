@@ -96,8 +96,8 @@ impl Patch for MouseSensitivityFix {
         // Retrieve clock instance
         let sig_address = offsets::ROOT_CLOCK_ACCESS.get()?;
         let inst = unsafe { libmem::disassemble(sig_address).context("failed to disassemble")? };
-        let root_clock_address =
-            utils::resolve_relative_target(&inst).context("failed to extract root clock address")?;
+        let root_clock_address = utils::resolve_relative_target(&inst)
+            .context("failed to extract root clock address")?;
 
         let _ = ROOT_CLOCK_ADDR.set(root_clock_address);
 

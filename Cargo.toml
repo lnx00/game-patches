@@ -6,6 +6,7 @@ members = [
     "mesom-patches",
     "mesow-patches",
     "wd-patches",
+    "fc3-patches",
     "framework",
 ]
 

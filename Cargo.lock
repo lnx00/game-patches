@@ -201,6 +201,20 @@ dependencies = [
 ]
 
 [[package]]
+name = "fc3-patches"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "enable-ansi-support",
+ "framework",
+ "libmem",
+ "serde",
+ "toml",
+ "tracing",
+ "windows",
+]
+
+[[package]]
 name = "filetime"
 version = "0.2.29"
 source = "registry+https://github.com/rust-lang/crates.io-index"

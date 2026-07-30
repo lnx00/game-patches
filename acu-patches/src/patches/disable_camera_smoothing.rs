@@ -1,5 +1,5 @@
 use anyhow::Result;
-use framework::{BytePatchNt, Patch};
+use framework::{BytePatch, Patch};
 
 use crate::sdk::offsets;
 
@@ -10,7 +10,7 @@ use crate::sdk::offsets;
 */
 
 pub struct DisableCameraSmoothing {
-    byte_patch: BytePatchNt<2>,
+    byte_patch: BytePatch<2>,
 }
 
 impl Patch for DisableCameraSmoothing {
@@ -35,7 +35,7 @@ impl Patch for DisableCameraSmoothing {
             0x90, 0x90, // nop nop
         ];
 
-        let byte_patch = BytePatchNt::new(target_address, patch_bytes);
+        let byte_patch = BytePatch::new(target_address, patch_bytes);
         Ok(Box::new(Self { byte_patch }))
     }
 

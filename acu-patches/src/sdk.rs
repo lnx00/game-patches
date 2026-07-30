@@ -1,5 +1,5 @@
 use anyhow::Result;
-use framework::utils;
+use framework::utils::{self, platform};
 
 pub mod integrity;
 pub mod offsets;
@@ -26,6 +26,14 @@ pub fn wait_until_ready() -> Result<()> {
     if let Err(e) = integrity::initialize() {
         tracing::warn!(
             "Integrity bypass verification failed: {:#}. Continuing anyway, but the game might crash...",
+            e
+        );
+    }
+
+    // Unhook NtProtectVirtualMemory
+    if let Err(e) = platform::unhook_prot_memory() {
+        tracing::warn!(
+            "Failed to unhook NtProtectVirtualMemory: {:#}. Continuing anyway, but the game might crash...",
             e
         );
     }

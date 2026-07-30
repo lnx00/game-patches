@@ -1,6 +1,6 @@
 use crate::sdk::offsets;
 use anyhow::Result;
-use framework::{BytePatchNt, Patch};
+use framework::{BytePatch, Patch};
 
 /*
     Just like Assassin's Creed Unity, the game has logic for disabling mouse smoothing.
@@ -9,7 +9,7 @@ use framework::{BytePatchNt, Patch};
 */
 
 pub struct DisableCameraSmoothing {
-    byte_patch: BytePatchNt<1>,
+    byte_patch: BytePatch<1>,
 }
 
 impl Patch for DisableCameraSmoothing {
@@ -34,7 +34,7 @@ impl Patch for DisableCameraSmoothing {
             0xEB, // jmp
         ];
 
-        let byte_patch = BytePatchNt::new(target_address, patch_bytes);
+        let byte_patch = BytePatch::new(target_address, patch_bytes);
         Ok(Box::new(Self { byte_patch }))
     }
 

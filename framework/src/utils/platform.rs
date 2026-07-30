@@ -1,8 +1,9 @@
-use anyhow::{Result, bail};
+use anyhow::{Context, Result, bail};
 use std::ffi::c_void;
 use std::ops::Range;
 use std::sync::LazyLock;
 use windows::Win32::Foundation::CloseHandle;
+use windows::Win32::System::Memory::{PAGE_EXECUTE_READWRITE, VirtualProtect};
 
 use windows::Win32::System::Console::{AllocConsole, FreeConsole, SetConsoleTitleW};
 use windows::Win32::System::Diagnostics::Debug::{
@@ -200,5 +201,46 @@ pub fn prot_memory_native(
         }
 
         Ok(old_protect)
+    }
+}
+
+/// Unhooks NtProtectVirtualMemory.
+/// Credits: https://github.com/yubie-re/vmp-virtualprotect-bypass
+#[cfg(target_arch = "x86_64")]
+pub fn unhook_prot_memory() -> Result<()> {
+    unsafe {
+        let ntdll = GetModuleHandleA(s!("ntdll.dll"))?;
+        let nt_query_section_addr =
+            GetProcAddress(ntdll, s!("NtQuerySection")).context("failed to find NtQuerySection")?;
+        let nt_vp_addr = GetProcAddress(ntdll, s!("NtProtectVirtualMemory"))
+            .context("failed to find NtProtectVirtualMemory")?;
+
+        // NtProtectVirtualMemory = NtQuerySection - 1
+        let syscall_id = (nt_query_section_addr as *const u8)
+            .add(4)
+            .read()
+            .wrapping_sub(1);
+        tracing::debug!("NtProtectVirtualMemory syscall id: {:#x}", syscall_id);
+
+        // ntdll syscall stub layout:
+        //   0: 4C 8B D1        mov r10, rcx
+        //   3: B8 XX 00 00 00  mov eax, <syscall_number>
+        let restore: [u8; 5] = [0x4C, 0x8B, 0xD1, 0xB8, syscall_id];
+        let target = nt_vp_addr as *mut u8;
+
+        let mut old_protect = PAGE_PROTECTION_FLAGS(0);
+
+        VirtualProtect(
+            target.cast(),
+            restore.len(),
+            PAGE_EXECUTE_READWRITE,
+            &mut old_protect,
+        )?;
+
+        std::ptr::copy_nonoverlapping(restore.as_ptr(), target, restore.len());
+
+        VirtualProtect(target.cast(), restore.len(), old_protect, &mut old_protect)?;
+
+        Ok(())
     }
 }

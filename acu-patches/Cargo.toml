@@ -22,5 +22,5 @@ libmem = { workspace = true }
 windows = { workspace = true }
 
 # Plugin-only dependencies
-assert-offset = { version = "0.1.1", optional = true }
+assert-offset = { version = "0.1.2", optional = true }
 tracing-subscriber = { workspace = true, optional = true }

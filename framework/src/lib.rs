@@ -1,10 +1,12 @@
 pub mod config;
+pub mod ext;
 pub mod logging;
 pub mod manager;
 pub mod patch;
 pub mod utils;
 
 pub use config::Config;
+pub use ext::ResultLogExt;
 pub use logging::init_logger;
 pub use manager::PatchManager;
 pub use patch::Patch;

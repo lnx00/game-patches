@@ -1,5 +1,10 @@
+use std::{thread, time};
+
 use anyhow::Result;
-use framework::utils::{self, platform};
+use framework::{
+    ResultLogExt,
+    utils::{self, platform},
+};
 
 pub mod integrity;
 pub mod offsets;
@@ -13,6 +18,9 @@ pub fn wait_until_ready() -> Result<()> {
     let module = offsets::GAME_MODULE.wait();
     tracing::info!("Found game module: {}", module);
 
+    // VMP paranoia
+    thread::sleep(time::Duration::from_secs(5));
+
     // Check game version
     tracing::info!("Checking game version...");
     match utils::check_game_version(GAME_BINARY_TIMESTAMPS) {
@@ -22,20 +30,11 @@ pub fn wait_until_ready() -> Result<()> {
 
     // Handle integrity checks
     tracing::info!("Waiting for integrity checks...");
-    if let Err(e) = integrity::initialize() {
-        tracing::warn!(
-            "Integrity bypass verification failed: {:#}. Continuing anyway, but the game might crash...",
-            e
-        );
-    }
+    integrity::initialize().warn_and_continue("integrity bypass verification failed");
 
     // Unhook NtProtectVirtualMemory
-    if let Err(e) = platform::unhook_prot_memory() {
-        tracing::warn!(
-            "Failed to unhook NtProtectVirtualMemory: {:#}. Continuing anyway, but the game might crash...",
-            e
-        );
-    }
+    tracing::info!("Unhooking NtProtectVirtualMemory...");
+    platform::unhook_prot_memory().warn_and_continue("failed to unhook NtProtectVirtualMemory");
 
     Ok(())
 }

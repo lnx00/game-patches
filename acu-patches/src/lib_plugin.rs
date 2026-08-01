@@ -3,6 +3,10 @@ mod plugin;
 use crate::{config::CONFIG, patches};
 use anyhow::Result;
 use framework::PatchManager;
+use framework::{
+    ResultLogExt,
+    utils::{self, platform},
+};
 use plugin::{ACUPluginInfo, ACUPluginLoaderInterface, PLUGIN_API_VERSION, make_version};
 use windows::Win32::Foundation::HINSTANCE;
 
@@ -21,6 +25,10 @@ fn run() -> Result<()> {
 }
 
 extern "C" fn init_patches(_plugin_loader: &ACUPluginLoaderInterface) -> bool {
+    // Unhook NtProtectVirtualMemory
+    tracing::info!("Unhooking NtProtectVirtualMemory...");
+    platform::unhook_prot_memory().warn_and_continue("failed to unhook NtProtectVirtualMemory");
+
     if let Err(e) = run() {
         tracing::error!("Fatal error: {:#}", e);
     }

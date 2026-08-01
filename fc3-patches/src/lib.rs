@@ -3,6 +3,7 @@ use std::{sync::RwLock, thread};
 use crate::config::CONFIG;
 use anyhow::Result;
 use framework::{PatchManager, utils::platform};
+use windows::Win32::UI::Input::KeyboardAndMouse::VK_F10;
 
 mod config;
 mod patches;
@@ -11,8 +12,6 @@ mod sdk;
 const PKG_NAME: &str = env!("CARGO_PKG_NAME");
 const PKG_VERSION: &str = env!("CARGO_PKG_VERSION");
 const PKG_AUTHORS: &str = env!("CARGO_PKG_AUTHORS");
-
-const VK_F11: i32 = 0x7A;
 
 static PATCH_MANAGER: RwLock<Option<PatchManager>> = RwLock::new(None);
 
@@ -44,7 +43,7 @@ fn run() -> Result<()> {
     // Wait for unload, if enabled
     if CONFIG.allow_unloading {
         tracing::info!("Patches ready! press F11 to unload.");
-        while !platform::is_button_down(VK_F11) {
+        while !platform::is_button_down(VK_F10.0 as i32) {
             thread::sleep(std::time::Duration::from_millis(100));
         }
 

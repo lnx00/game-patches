@@ -1,6 +1,6 @@
 use crate::sdk::offsets;
 use anyhow::Result;
-use framework::{BytePatchNt, Patch};
+use framework::{BytePatch, Patch};
 
 /*
     The game has a maximum limit for camera delta movement and will
@@ -9,7 +9,7 @@ use framework::{BytePatchNt, Patch};
 */
 
 pub struct DisableInputClamp {
-    byte_patch_clamp: BytePatchNt<1>,
+    byte_patch_clamp: BytePatch<1>,
 }
 
 impl Patch for DisableInputClamp {
@@ -30,10 +30,12 @@ impl Patch for DisableInputClamp {
     {
         let target_address_clamp = offsets::CLAMP_INPUT_CONDITION.get()?;
 
-        let patch_bytes_clamp: [u8; _] = [0xEB];
+        let patch_bytes_clamp: [u8; _] = [
+            0xEB, // jmp
+        ];
 
         Ok(Box::new(Self {
-            byte_patch_clamp: BytePatchNt::new(target_address_clamp, patch_bytes_clamp),
+            byte_patch_clamp: BytePatch::new(target_address_clamp, patch_bytes_clamp),
         }))
     }
 

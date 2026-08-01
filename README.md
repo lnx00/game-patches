@@ -9,6 +9,7 @@ This repository contains a set of quality-of-life patches for several PC games. 
 - [Middle-earth: Shadow of Mordor](./mesom-patches/)
 - [Middle-earth: Shadow of War](./mesow-patches/)
 - [Watch Dogs](./wd-patches/)
+- [Far Cry 3](./fc3-patches/)
 
 ## Workspace
 

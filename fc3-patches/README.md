@@ -4,8 +4,8 @@ Quality-of-life patches for the game "Far Cry 3".
 
 ## Features
 
-- **Disable input clamp:** Disabled the maximum mouse input (also reffered to as "Negative Mouse Acceleration").
-- **Sensitivity fix:** Reduces the sensitivity to make the game playable with modern high-DPI mice.
+- **Disable input clamp:** Removes the maximum mouse input limit (also referred to as "Negative Mouse Acceleration").
+- **Sensitivity fix:** Reduces the sensitivity scale to make the game playable with modern high-DPI mice.
 
 ## Installation
 
@@ -13,8 +13,7 @@ Quality-of-life patches for the game "Far Cry 3".
 2. Copy **all** extracted files and folders (`dsound.dll`, `plugins/...`) to your game binary folder (`Far Cry 3/bin/`).
 3. Run the game and enjoy!
 
-The mod files contain an ASI loader that will automatically load the mod DLL when launching the game. If the `dsound.dll` file conflicts
-with any other mod, you can choose an alternative DLL [here](https://github.com/ThirteenAG/Ultimate-ASI-Loader/releases/latest/).
+The mod files contain an ASI loader that will automatically load the mod DLL when launching the game. If the `dsound.dll` file conflicts with any other mod, you can choose an alternative DLL [here](https://github.com/ThirteenAG/Ultimate-ASI-Loader/releases/latest/).
 
 ## Uninstallation
 

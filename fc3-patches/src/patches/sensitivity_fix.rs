@@ -34,7 +34,7 @@ impl Patch for SensitivityFix {
     }
 
     fn config_key(&self) -> Option<&'static str> {
-        Some("Sensitivity_fix")
+        Some("sensitivity_fix")
     }
 
     fn init() -> Result<Box<dyn Patch>>

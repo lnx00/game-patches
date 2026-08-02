@@ -4,6 +4,12 @@ use crate::sdk::offsets;
 use anyhow::{Context, Result};
 use framework::Patch;
 
+/*
+    Even the lowest in-game sensitivity option is too high for
+    modern mice with high DPI. We can fix this issue by multiplying
+    the game's sensitivity with a low factor (20%).
+*/
+
 static SENS_MULTIPLIER: f32 = 0.2;
 static TRAMPOLINE_ADDR: AtomicUsize = AtomicUsize::new(0);
 

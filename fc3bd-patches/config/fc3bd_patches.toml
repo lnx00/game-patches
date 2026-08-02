@@ -1,0 +1,6 @@
+show_console = false    # Attach debug console on startup
+allow_unloading = false # Allow unloading of patches at runtime
+
+[patches]
+disable_input_clamp = true
+sensitivity_fix = true

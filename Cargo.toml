@@ -8,6 +8,7 @@ members = [
     "wd-patches",
     "fc3-patches",
     "fc3bd-patches",
+    "lswtss-patches",
     "framework",
 ]
 

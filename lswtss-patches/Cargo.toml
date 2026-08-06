@@ -1,0 +1,18 @@
+[package]
+name = "lswtss-patches"
+version = "0.1.0"
+authors = ["lnx00"]
+edition = "2024"
+
+[lib]
+crate-type = ["cdylib"]
+
+[dependencies]
+framework = { path = "../framework" }
+anyhow = { workspace = true }
+tracing = { workspace = true }
+enable-ansi-support = { workspace = true }
+toml = { workspace = true }
+serde = { workspace = true }
+libmem = { workspace = true }
+windows = { workspace = true }

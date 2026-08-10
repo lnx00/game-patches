@@ -9,6 +9,7 @@ members = [
     "fc3-patches",
     "fc3bd-patches",
     "lswtss-patches",
+    "sodyose-patches",
     "framework",
 ]
 

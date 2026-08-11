@@ -82,6 +82,12 @@ pub fn resolve_relative_target(inst: &libmem::Inst) -> Option<usize> {
     next_address.checked_add_signed(displacement)
 }
 
+/// Returns the rel32 target for jmp
+//#[cfg(target_arch = "x86")]
+pub fn get_jump_rel32(source_addr: usize, dest_addr: usize) -> i32 {
+    (dest_addr as isize - (source_addr as isize + 0x5)) as i32
+}
+
 /// Verbose version comparison
 pub fn check_game_version(expected: &[u32]) -> Result<u32> {
     if let Some(current_timestamp) = platform::get_time_date_stamp() {

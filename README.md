@@ -11,6 +11,7 @@ This repository contains a set of quality-of-life patches for several PC games. 
 - [Watch Dogs](./wd-patches/)
 - [Far Cry 3](./fc3-patches/)
 - [Far Cry 3 - Blood Dragon](./fc3bd-patches/)
+- [State of Decay: YOSE](./sodyose-patches/)
 
 ## Workspace
 

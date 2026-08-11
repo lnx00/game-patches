@@ -5,6 +5,7 @@ Quality-of-life patches for the game "State of Decay: YOSE".
 ## Features
 
 - **Disable Input Clamping:** Removes the minimum and maximum turn speed limits (also referred to as "Negative Mouse Acceleration").
+- **Mouse Sensitivity Fix:** Unties the mouse sensitivity from the framerate.
 
 ## Installation
 

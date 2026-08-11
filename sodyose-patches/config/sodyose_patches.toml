@@ -3,3 +3,4 @@ allow_unloading = false # Allow unloading of patches at runtime
 
 [patches]
 disable_input_clamp = true
+mouse_sensitivity_fix = true

@@ -32,3 +32,7 @@ pub static MULT_DELTA_TIME_AIMING_Y: LazySignature =
 // StateOfDecay.exe+11E9995: mulss xmm0, [esp+40h+delta_time]
 pub static MULT_DELTA_TIME_AIMING_X: LazySignature =
     LazySignature::new(&GAME_MODULE, "F3 0F 59 44 24 ? F3 A5");
+
+// StateOfDecay.exe+11EA9FC: fld dword ptr [esi+30h]
+pub static LOAD_MIN_PITCH: LazySignature =
+    LazySignature::new(&GAME_MODULE, "D9 46 ? D9 5C 24 ? D9 44 24 ? D9 1C 24 E8");

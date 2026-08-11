@@ -88,6 +88,20 @@ pub fn get_jump_rel32(source_addr: usize, dest_addr: usize) -> i32 {
     (dest_addr as isize - (source_addr as isize + 0x5)) as i32
 }
 
+/// Creates jmp istruction and fills the rest with NOPs
+pub fn create_jmp_patch<const N: usize>(source_addr: usize, dest_addr: usize) -> [u8; N] {
+    const { assert!(N >= 5, "buffer too small for jmp patch") };
+
+    let mut patch = [0x90; N];
+    patch[0] = 0xE9; // jmp
+
+    // Relative jump target
+    let rel32 = get_jump_rel32(source_addr, dest_addr).to_le_bytes();
+    patch[1..5].copy_from_slice(&rel32);
+
+    patch
+}
+
 /// Verbose version comparison
 pub fn check_game_version(expected: &[u32]) -> Result<u32> {
     if let Some(current_timestamp) = platform::get_time_date_stamp() {

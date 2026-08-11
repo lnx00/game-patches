@@ -2,13 +2,22 @@ use crate::sdk::offsets;
 use anyhow::Result;
 use framework::{BytePatch, Patch};
 
-pub struct DisableMouseAccel {
+/*
+    The game clamps mouse movement to a maximum of 1.0, which causes a
+    negative acceleration effect. There's also a deadzone for small movements,
+    causing slow mouse movements to not be registered.
+
+    We can fix these issues by NOP'ing the conditions that clamp/limit the
+    mouse movement.
+*/
+
+pub struct DisableInputClamp {
     byte_patch_x_limit: BytePatch<8>,
     byte_patch_y_limit: BytePatch<8>,
     byte_patch_deadzone: BytePatch<6>,
 }
 
-impl Patch for DisableMouseAccel {
+impl Patch for DisableInputClamp {
     fn name() -> &'static str
     where
         Self: Sized,

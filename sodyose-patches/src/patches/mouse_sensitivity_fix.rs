@@ -5,9 +5,13 @@ use anyhow::Result;
 use framework::{BytePatch, Patch, utils};
 
 /*
-    Even the lowest in-game sensitivity option is too high for
-    modern mice with high DPI. We can fix this issue by multiplying
-    the game's sensitivity with a low factor (20%).
+    The game erroneously multiplies mouse movement along the x and y axes by
+    delta time. This causes the turn speed to become slower at high frame
+    rates.
+    
+    We can fix this by replacing delta time in these multiplications
+    with a constant factor. While we're at it, we can also use a smaller factor
+    to reduce the overall mouse sensitivity, as it's too high anyway.
 */
 
 static SENS_MULTIPLIER: f32 = 0.01;
@@ -107,31 +111,12 @@ impl Patch for MouseSensitivityFix {
             std::sync::atomic::Ordering::Relaxed,
         );
 
-        let patch_bytes_detour_roaming: [u8; _] = {
-            let [b0, b1, b2, b3] =
-                utils::get_jump_rel32(target_addr_roaming, dest_addr_roaming).to_le_bytes();
-
-            [
-                0xE9, b0, b1, b2, b3, // jmp [dest_address]
-                0x90, 0x90, 0x90, 0x90, 0x90, // nop
-                0x90, 0x90, 0x90, 0x90, 0x90, // nop
-                0x90, 0x90, 0x90, 0x90, 0x90, // nop
-            ]
-        };
-
-        let patch_bytes_detour_aiming_x: [u8; _] = {
-            let [b0, b1, b2, b3] =
-                utils::get_jump_rel32(target_addr_aiming_x, dest_addr_aiming_x).to_le_bytes();
-
-            [0xE9, b0, b1, b2, b3, 0x90] // jmp [dest_address]; nop
-        };
-
-        let patch_bytes_detour_aiming_y: [u8; _] = {
-            let [b0, b1, b2, b3] =
-                utils::get_jump_rel32(target_addr_aiming_y, dest_addr_aiming_y).to_le_bytes();
-
-            [0xE9, b0, b1, b2, b3, 0x90] // jmp [dest_address]; nop
-        };
+        let patch_bytes_detour_roaming =
+            utils::create_jmp_patch(target_addr_roaming, dest_addr_roaming);
+        let patch_bytes_detour_aiming_x =
+            utils::create_jmp_patch(target_addr_aiming_x, dest_addr_aiming_x);
+        let patch_bytes_detour_aiming_y =
+            utils::create_jmp_patch(target_addr_aiming_y, dest_addr_aiming_y);
 
         Ok(Box::new(Self {
             byte_patch_roaming: BytePatch::new(target_addr_roaming, patch_bytes_detour_roaming),

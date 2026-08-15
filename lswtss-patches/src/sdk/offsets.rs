@@ -14,3 +14,7 @@ pub static LOAD_DECAY_RATE_MOUNTED: LazySignature =
 // LEGOSTARWARSSKYWALKERSAGA_DX11.exe+149CF1: jb short loc_14149CF25
 pub static SMOOTHING_FALLBACK_COND_ROAMING: LazySignature =
     LazySignature::new(&GAME_MODULE, "72 ? 41 0F 28 CA E8");
+
+// LEGOSTARWARSSKYWALKERSAGA_DX11.exe+149F0AF: mulss xmm0, cs:g_input_factor
+pub static MULT_INPUT_FACTOR: LazySignature =
+    LazySignature::new(&GAME_MODULE, "45 33 F6 4C 89 B3 ? ? ? ? 48 8B CD");

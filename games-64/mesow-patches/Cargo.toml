@@ -1,6 +1,6 @@
 [package]
-name = "mesom-patches"
-version = "0.2.2"
+name = "mesow-patches"
+version = "0.1.1"
 authors = ["lnx00"]
 edition = "2024"
 
@@ -8,7 +8,7 @@ edition = "2024"
 crate-type = ["cdylib"]
 
 [dependencies]
-framework = { path = "../framework" }
+framework = { path = "../../framework" }
 anyhow = { workspace = true }
 tracing = { workspace = true }
 enable-ansi-support = { workspace = true }

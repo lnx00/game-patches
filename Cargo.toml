@@ -1,15 +1,20 @@
 [workspace]
 resolver = "3"
 members = [
-    "acu-patches",
-    "acs-patches",
-    "mesom-patches",
-    "mesow-patches",
-    "wd-patches",
-    "fc3-patches",
-    "fc3bd-patches",
-    "lswtss-patches",
-    "sodyose-patches",
+    # x86_64
+    "games-64/acu-patches",
+    "games-64/acs-patches",
+    "games-64/mesom-patches",
+    "games-64/mesow-patches",
+    "games-64/wd-patches",
+    "games-64/lswtss-patches",
+
+    # x86
+    "games-32/fc3-patches",
+    "games-32/fc3bd-patches",
+    "games-32/sodyose-patches",
+
+    # Shared
     "framework",
 ]
 

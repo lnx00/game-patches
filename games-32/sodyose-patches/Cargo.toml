@@ -1,18 +1,14 @@
 [package]
-name = "acu-patches"
-version = "0.5.1"
+name = "sodyose-patches"
+version = "0.2.0"
 authors = ["lnx00"]
 edition = "2024"
-
-[features]
-default = []
-plugin = ["dep:assert-offset", "dep:tracing-subscriber"]
 
 [lib]
 crate-type = ["cdylib"]
 
 [dependencies]
-framework = { path = "../framework" }
+framework = { path = "../../framework" }
 anyhow = { workspace = true }
 tracing = { workspace = true }
 enable-ansi-support = { workspace = true }
@@ -20,7 +16,3 @@ toml = { workspace = true }
 serde = { workspace = true }
 libmem = { workspace = true }
 windows = { workspace = true }
-
-# Plugin-only dependencies
-assert-offset = { version = "0.1.2", optional = true }
-tracing-subscriber = { workspace = true, optional = true }

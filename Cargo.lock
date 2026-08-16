@@ -18,15 +18,37 @@ dependencies = [
 
 [[package]]
 name = "acu-patches"
-version = "0.5.1"
+version = "0.5.2"
+dependencies = [
+ "acu-patches-core",
+ "anyhow",
+ "enable-ansi-support",
+ "framework",
+ "tracing",
+ "windows",
+]
+
+[[package]]
+name = "acu-patches-core"
+version = "0.5.2"
 dependencies = [
  "anyhow",
- "assert-offset",
- "enable-ansi-support",
  "framework",
  "libmem",
  "serde",
  "toml",
+ "tracing",
+ "windows",
+]
+
+[[package]]
+name = "acu-patches-plugin"
+version = "0.5.2"
+dependencies = [
+ "acu-patches-core",
+ "anyhow",
+ "assert-offset",
+ "framework",
  "tracing",
  "tracing-subscriber",
  "windows",

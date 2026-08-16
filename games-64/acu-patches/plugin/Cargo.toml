@@ -1,0 +1,17 @@
+[package]
+name = "acu-patches-plugin"
+version = "0.5.2"
+authors = ["lnx00"]
+edition = "2024"
+
+[lib]
+crate-type = ["cdylib"]
+
+[dependencies]
+acu-patches-core = { path = "../core" }
+framework = { path = "../../../framework" }
+anyhow = { workspace = true }
+tracing = { workspace = true }
+windows = { workspace = true }
+assert-offset = { workspace = true }
+tracing-subscriber = { workspace = true }

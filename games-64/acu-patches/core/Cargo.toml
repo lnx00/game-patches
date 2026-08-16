@@ -1,0 +1,14 @@
+[package]
+name = "acu-patches-core"
+version = "0.5.2"
+authors = ["lnx00"]
+edition = "2024"
+
+[dependencies]
+framework = { path = "../../../framework" }
+anyhow = { workspace = true }
+tracing = { workspace = true }
+toml = { workspace = true }
+serde = { workspace = true }
+libmem = { workspace = true }
+windows = { workspace = true }

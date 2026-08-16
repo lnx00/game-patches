@@ -1,4 +1,4 @@
-use crate::{config::CONFIG, patches, sdk};
+use acu_patches_core::{config::CONFIG, patches, sdk};
 use anyhow::Result;
 use framework::{PatchManager, utils::platform};
 use std::{sync::RwLock, thread};

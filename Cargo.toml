@@ -2,7 +2,9 @@
 resolver = "3"
 members = [
     # x86_64
-    "games-64/acu-patches",
+    "games-64/acu-patches/core",
+    "games-64/acu-patches/standalone",
+    "games-64/acu-patches/plugin",
     "games-64/acs-patches",
     "games-64/mesom-patches",
     "games-64/mesow-patches",
@@ -19,6 +21,7 @@ members = [
 ]
 
 [workspace.dependencies]
+assert-offset = "0.1.2"
 anyhow = "1.0"
 tracing = "0.1"
 tracing-subscriber = { version = "0.3", features = ["env-filter", "fmt"] }

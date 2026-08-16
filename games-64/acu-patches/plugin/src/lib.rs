@@ -1,14 +1,13 @@
 mod plugin;
 
-use crate::{config::CONFIG, patches};
+use acu_patches_core::{config::CONFIG, patches};
 use anyhow::Result;
 use framework::PatchManager;
-use framework::{
-    ResultLogExt,
-    utils::{self, platform},
-};
+use framework::{ResultLogExt, utils::platform};
 use plugin::{ACUPluginInfo, ACUPluginLoaderInterface, PLUGIN_API_VERSION, make_version};
 use windows::Win32::Foundation::HINSTANCE;
+
+const MY_PLUGIN_VERSION: u64 = make_version(0, 5, 2, 0);
 
 fn run() -> Result<()> {
     let mut patch_manager = PatchManager::new();
@@ -49,7 +48,7 @@ pub unsafe extern "C" fn ACUPluginStart(
     );
 
     your_plugin_info_out.m_plugin_api_version = PLUGIN_API_VERSION;
-    your_plugin_info_out.m_plugin_version = make_version(0, 4, 0, 0);
+    your_plugin_info_out.m_plugin_version = MY_PLUGIN_VERSION;
 
     your_plugin_info_out.m_init_stage_when_code_patches_are_safe_to_apply = Some(init_patches);
 

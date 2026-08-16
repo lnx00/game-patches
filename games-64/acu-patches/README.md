@@ -24,16 +24,17 @@ An example configuration file can be found [here](./config/acu_patches.toml).
 
 ## Building
 
-Build the standalone plugin:
+Build both variants simultaneously:
 
 ```bash
-cargo build
+cargo build -p acu-patches -p acu-patches-plugin
 ```
 
-Build the ACUFixes plugin:
+Or build individually:
 
 ```bash
-cargo build --features plugin
+cargo build -p acu-patches          # → acu_patches.dll
+cargo build -p acu-patches-plugin   # → acu_patches_plugin.dll
 ```
 
 ## Credits

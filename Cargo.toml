@@ -19,6 +19,7 @@ members = [
     # Shared
     "framework",
 ]
+default-members = ["framework"]
 
 [workspace.dependencies]
 assert-offset = "0.1.2"

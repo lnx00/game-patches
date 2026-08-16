@@ -10,7 +10,7 @@ crate-type = ["cdylib"]
 [dependencies]
 acu-patches-core = { path = "../core" }
 framework = { path = "../../../framework" }
-anyhow = { workspace = true }
-tracing = { workspace = true }
-enable-ansi-support = { workspace = true }
-windows = { workspace = true }
+anyhow.workspace = true
+tracing.workspace = true
+enable-ansi-support.workspace = true
+windows.workspace = true

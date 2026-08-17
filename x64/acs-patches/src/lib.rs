@@ -3,6 +3,7 @@ use std::{sync::RwLock, thread};
 use crate::config::CONFIG;
 use anyhow::Result;
 use framework::{PatchManager, utils::platform};
+use windows::Win32::UI::Input::KeyboardAndMouse::VK_F11;
 
 mod config;
 mod patches;
@@ -11,8 +12,6 @@ mod sdk;
 const PKG_NAME: &str = env!("CARGO_PKG_NAME");
 const PKG_VERSION: &str = env!("CARGO_PKG_VERSION");
 const PKG_AUTHORS: &str = env!("CARGO_PKG_AUTHORS");
-
-const VK_F11: i32 = 0x7A;
 
 static PATCH_MANAGER: RwLock<Option<PatchManager>> = RwLock::new(None);
 

@@ -14,7 +14,7 @@ use windows::Win32::System::SystemServices::{
     IMAGE_DOS_HEADER, IMAGE_DOS_SIGNATURE, IMAGE_NT_SIGNATURE,
 };
 use windows::Win32::System::Threading::{GetCurrentProcessId, OpenProcess, PROCESS_VM_OPERATION};
-use windows::Win32::UI::Input::KeyboardAndMouse::GetAsyncKeyState;
+use windows::Win32::UI::Input::KeyboardAndMouse::{GetAsyncKeyState, VIRTUAL_KEY};
 use windows::Win32::UI::WindowsAndMessaging::*;
 use windows::core::{HSTRING, PCWSTR};
 use windows::{
@@ -87,8 +87,8 @@ pub fn detach_console() {
     let _ = unsafe { FreeConsole() };
 }
 
-pub fn is_button_down(vk: i32) -> bool {
-    unsafe { (GetAsyncKeyState(vk) as u16 & 0x8000) != 0 }
+pub fn is_button_down(vk: VIRTUAL_KEY) -> bool {
+    unsafe { (GetAsyncKeyState(vk.0 as i32) as u16 & 0x8000) != 0 }
 }
 
 pub fn get_time_date_stamp() -> Option<u32> {

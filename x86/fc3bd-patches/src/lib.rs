@@ -43,7 +43,7 @@ fn run() -> Result<()> {
     // Wait for unload, if enabled
     if CONFIG.allow_unloading {
         tracing::info!("Patches ready! press F10 to unload.");
-        while !platform::is_button_down(VK_F10.0 as i32) {
+        while !platform::is_button_down(VK_F10) {
             thread::sleep(std::time::Duration::from_millis(100));
         }
 

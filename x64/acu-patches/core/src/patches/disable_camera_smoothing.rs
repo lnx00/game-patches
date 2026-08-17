@@ -31,9 +31,7 @@ impl Patch for DisableCameraSmoothing {
     {
         let target_address = offsets::JUMP_CAMERA_SMOOTHING.get()?;
 
-        let patch_bytes: [u8; _] = [
-            0x90, 0x90, // nop nop
-        ];
+        let patch_bytes: [u8; _] = [0x90; 2]; // nop
 
         let byte_patch = BytePatch::new(target_address, patch_bytes);
         Ok(Box::new(Self { byte_patch }))

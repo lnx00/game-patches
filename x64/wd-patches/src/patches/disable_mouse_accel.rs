@@ -35,9 +35,7 @@ impl Patch for DisableMouseAccel {
         let target_address_accel = offsets::CALL_MOUSE_ACCELERATION.get()?;
         let target_address_clamp = offsets::CLAMP_INPUT_CONDITION.get()?;
 
-        let patch_bytes_accel: [u8; _] = [
-            0x90, 0x90, 0x90, 0x90, 0x90, // nop
-        ];
+        let patch_bytes_accel: [u8; _] = [0x90; 5]; // nop
 
         let patch_bytes_clamp: [u8; _] = [
             0x90, // nop

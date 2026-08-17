@@ -8,7 +8,7 @@ use framework::{BytePatch, Patch, utils};
     The game erroneously multiplies mouse movement along the x and y axes by
     delta time. This causes the turn speed to become slower at high frame
     rates.
-    
+
     We can fix this by replacing delta time in these multiplications
     with a constant factor. While we're at it, we can also use a smaller factor
     to reduce the overall mouse sensitivity, as it's too high anyway.
@@ -112,11 +112,11 @@ impl Patch for MouseSensitivityFix {
         );
 
         let patch_bytes_detour_roaming =
-            utils::create_jmp_patch(target_addr_roaming, dest_addr_roaming);
+            utils::create_jmp_patch_near(target_addr_roaming, dest_addr_roaming);
         let patch_bytes_detour_aiming_x =
-            utils::create_jmp_patch(target_addr_aiming_x, dest_addr_aiming_x);
+            utils::create_jmp_patch_near(target_addr_aiming_x, dest_addr_aiming_x);
         let patch_bytes_detour_aiming_y =
-            utils::create_jmp_patch(target_addr_aiming_y, dest_addr_aiming_y);
+            utils::create_jmp_patch_near(target_addr_aiming_y, dest_addr_aiming_y);
 
         Ok(Box::new(Self {
             byte_patch_roaming: BytePatch::new(target_addr_roaming, patch_bytes_detour_roaming),

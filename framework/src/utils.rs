@@ -89,7 +89,7 @@ pub fn get_jump_rel32(source_addr: usize, dest_addr: usize) -> i32 {
 }
 
 /// Creates jmp istruction and fills the rest with NOPs
-pub fn create_jmp_patch<const N: usize>(source_addr: usize, dest_addr: usize) -> [u8; N] {
+pub fn create_jmp_patch_near<const N: usize>(source_addr: usize, dest_addr: usize) -> [u8; N] {
     const { assert!(N >= 5, "buffer too small for jmp patch") };
 
     let mut patch = [0x90; N];

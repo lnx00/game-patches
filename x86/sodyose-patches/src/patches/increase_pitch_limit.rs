@@ -58,7 +58,7 @@ impl Patch for IncreasePitchLimit {
         );
 
         let patch_bytes_detour_roaming =
-            utils::create_jmp_patch(target_addr_roaming, dest_addr_roaming);
+            utils::create_jmp_patch_near(target_addr_roaming, dest_addr_roaming);
 
         Ok(Box::new(Self {
             byte_patch_limit_min: BytePatch::new(target_addr_roaming, patch_bytes_detour_roaming),

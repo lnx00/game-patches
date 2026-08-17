@@ -37,13 +37,8 @@ impl Patch for DisableInputClamp {
         let target_y_factor = offsets::LIMIT_Y_FACTOR_ANCHOR.get()? + 0x41;
         let target_deadzone = offsets::INPUT_DEADZONE_COND.get()?;
 
-        let patch_bytes_factors: [u8; _] = [
-            0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, // nop
-        ];
-
-        let patch_bytes_deadzone: [u8; _] = [
-            0x90, 0x90, 0x90, 0x90, 0x90, 0x90, // nop
-        ];
+        let patch_bytes_factors: [u8; _] = [0x90; 8]; // nop
+        let patch_bytes_deadzone: [u8; _] = [0x90; 6]; // nop
 
         Ok(Box::new(Self {
             byte_patch_x_limit: BytePatch::new(target_x_factor, patch_bytes_factors),

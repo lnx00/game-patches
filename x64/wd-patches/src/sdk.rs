@@ -1,7 +1,7 @@
 use std::{thread, time};
 
 use anyhow::Result;
-use framework::utils;
+use framework::{ResultLogExt, utils::{self, platform}};
 
 pub mod offsets;
 
@@ -23,6 +23,10 @@ pub fn wait_until_ready() -> Result<()> {
         Ok(version) => tracing::info!("Game version ({:X}) validated", version),
         Err(e) => tracing::warn!("Failed to check game version: {:#}", e),
     }
+
+    // Unhook NtProtectVirtualMemory
+    tracing::info!("Unhooking NtProtectVirtualMemory...");
+    platform::unhook_prot_memory().warn_and_continue("failed to unhook NtProtectVirtualMemory");
 
     Ok(())
 }

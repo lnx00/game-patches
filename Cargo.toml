@@ -2,19 +2,19 @@
 resolver = "3"
 members = [
     # x86_64
-    "games-64/acu-patches/core",
-    "games-64/acu-patches/standalone",
-    "games-64/acu-patches/plugin",
-    "games-64/acs-patches",
-    "games-64/mesom-patches",
-    "games-64/mesow-patches",
-    "games-64/wd-patches",
-    "games-64/lswtss-patches",
+    "x64/acu-patches/core",
+    "x64/acu-patches/standalone",
+    "x64/acu-patches/plugin",
+    "x64/acs-patches",
+    "x64/mesom-patches",
+    "x64/mesow-patches",
+    "x64/wd-patches",
+    "x64/lswtss-patches",
 
     # x86
-    "games-32/fc3-patches",
-    "games-32/fc3bd-patches",
-    "games-32/sodyose-patches",
+    "x86/fc3-patches",
+    "x86/fc3bd-patches",
+    "x86/sodyose-patches",
 
     # Shared
     "framework",

@@ -28,6 +28,8 @@ use windows::{
     core::s,
 };
 
+pub use enable_ansi_support::enable_ansi_support;
+
 type NtProtectVirtualMemoryFn = unsafe extern "system" fn(
     process_handle: HANDLE,
     base_address: *mut *mut c_void,

@@ -7,7 +7,6 @@ name = "acs-patches"
 version = "0.2.1"
 dependencies = [
  "anyhow",
- "enable-ansi-support",
  "framework",
  "libmem",
  "tracing",
@@ -20,7 +19,6 @@ version = "0.5.2"
 dependencies = [
  "acu-patches-core",
  "anyhow",
- "enable-ansi-support",
  "framework",
  "tracing",
  "windows",
@@ -223,7 +221,6 @@ name = "fc3-patches"
 version = "0.1.0"
 dependencies = [
  "anyhow",
- "enable-ansi-support",
  "framework",
  "libmem",
  "tracing",
@@ -235,7 +232,6 @@ name = "fc3bd-patches"
 version = "0.1.0"
 dependencies = [
  "anyhow",
- "enable-ansi-support",
  "framework",
  "libmem",
  "tracing",
@@ -288,6 +284,7 @@ name = "framework"
 version = "0.1.0"
 dependencies = [
  "anyhow",
+ "enable-ansi-support",
  "libmem",
  "serde",
  "toml",
@@ -645,7 +642,6 @@ name = "lswtss-patches"
 version = "0.1.0"
 dependencies = [
  "anyhow",
- "enable-ansi-support",
  "framework",
  "libmem",
  "tracing",
@@ -672,7 +668,6 @@ name = "mesom-patches"
 version = "0.2.2"
 dependencies = [
  "anyhow",
- "enable-ansi-support",
  "framework",
  "libmem",
  "tracing",
@@ -684,7 +679,6 @@ name = "mesow-patches"
 version = "0.1.1"
 dependencies = [
  "anyhow",
- "enable-ansi-support",
  "framework",
  "libmem",
  "tracing",
@@ -1044,7 +1038,6 @@ name = "sodyose-patches"
 version = "0.2.0"
 dependencies = [
  "anyhow",
- "enable-ansi-support",
  "framework",
  "libmem",
  "tracing",
@@ -1477,7 +1470,6 @@ name = "wd-patches"
 version = "0.1.0"
 dependencies = [
  "anyhow",
- "enable-ansi-support",
  "framework",
  "libmem",
  "tracing",

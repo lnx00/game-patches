@@ -44,14 +44,14 @@ impl<const N: usize> BytePatch<N> {
     }
 }
 
-pub struct BytePatchNt<const N: usize> {
+pub struct BytePatchEx<const N: usize> {
     address: usize,
     patch_bytes: [u8; N],
     original_bytes: [u8; N],
     is_applied: bool,
 }
 
-impl<const N: usize> BytePatchNt<N> {
+impl<const N: usize> BytePatchEx<N> {
     pub fn new(address: usize, patch_bytes: [u8; N]) -> Self {
         Self {
             address,
@@ -69,7 +69,7 @@ impl<const N: usize> BytePatchNt<N> {
         unsafe {
             self.original_bytes = libmem::read_memory::<_>(self.address);
         }
-        utils::patch_bytes_nt(self.address, &self.patch_bytes)?;
+        utils::patch_bytes_ex(self.address, &self.patch_bytes)?;
 
         self.is_applied = true;
         Ok(())
@@ -80,7 +80,7 @@ impl<const N: usize> BytePatchNt<N> {
             return Ok(());
         }
 
-        utils::patch_bytes_nt(self.address, &self.original_bytes)?;
+        utils::patch_bytes_ex(self.address, &self.original_bytes)?;
 
         self.is_applied = false;
         Ok(())

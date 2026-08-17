@@ -13,7 +13,7 @@ pub use logging::init_logger;
 pub use manager::PatchManager;
 pub use patch::Patch;
 pub use utils::{
-    byte_patch::BytePatch, byte_patch::BytePatchNt, lazy::LazyModule, lazy::LazySignature,
+    byte_patch::BytePatch, byte_patch::BytePatchEx, lazy::LazyModule, lazy::LazySignature,
 };
 
 #[macro_export]

@@ -10,6 +10,7 @@ use std::{
 use anyhow::{Context, Result, bail};
 use windows::Win32::System::Memory::PAGE_EXECUTE_READWRITE;
 
+/// Replaces the given bytes.
 pub fn patch_bytes(address: usize, bytes: &[u8]) -> Result<()> {
     unsafe {
         let old_protect = libmem::prot_memory(address, bytes.len(), libmem::Prot::XRW)
@@ -24,18 +25,21 @@ pub fn patch_bytes(address: usize, bytes: &[u8]) -> Result<()> {
     }
 }
 
-/// Patches the given bytes.
-/// Uses NtProtectVirtualMemory instead of VirtualProtect to bypass some anti-tamper checks.
-pub fn patch_bytes_nt(address: usize, bytes: &[u8]) -> Result<()> {
+/// Replaces the given bytes.
+/// Uses VirtualProtectEx on an new unrestricted handle to bypass some anti-tamper checks.
+pub fn patch_bytes_ex(address: usize, bytes: &[u8]) -> Result<()> {
     unsafe {
-        let old_protect =
-            platform::prot_memory_native(address, bytes.len(), PAGE_EXECUTE_READWRITE)?;
+        let me = platform::current_process_ex()?;
 
-        // Write the bytes
+        // Unprotect
+        let old_protect =
+            platform::prot_memory_ex(&me, address, bytes.len(), PAGE_EXECUTE_READWRITE)?;
+
+        // Write
         libmem::write_memory(address, bytes);
 
-        // Restore previous protection
-        platform::prot_memory_native(address, bytes.len(), old_protect)?;
+        // Restore
+        platform::prot_memory_ex(&me, address, bytes.len(), old_protect)?;
     }
 
     Ok(())

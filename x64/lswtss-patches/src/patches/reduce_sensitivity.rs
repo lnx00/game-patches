@@ -64,7 +64,7 @@ impl Patch for ReduceSensitivity {
             std::sync::atomic::Ordering::Relaxed,
         );
 
-        let patch_bytes = utils::create_jmp_patch_far(target_address, dest_addr);
+        let patch_bytes = utils::create_jmp_patch_far(dest_addr);
 
         Ok(Box::new(Self {
             byte_patch: BytePatch::new(target_address, patch_bytes),

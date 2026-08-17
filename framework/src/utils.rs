@@ -103,7 +103,7 @@ pub fn create_jmp_patch<const N: usize>(source_addr: usize, dest_addr: usize) ->
 }
 
 // TODO: Merge this into one function
-pub fn create_jmp_patch_far<const N: usize>(source_addr: usize, dest_addr: usize) -> [u8; N] {
+pub fn create_jmp_patch_far<const N: usize>(dest_addr: usize) -> [u8; N] {
     const { assert!(N >= 14, "buffer too small for jmp patch") };
 
     let mut patch = [0x90; N];

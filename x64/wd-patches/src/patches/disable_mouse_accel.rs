@@ -7,13 +7,14 @@ use framework::{BytePatch, Patch};
     the corresponding function call.
 
     There is also a maximum limit for the camera delta movement. This
-    can be disabled by patching skipping the condition that checks the
+    can be disabled by patching skipping the conditions that checks the
     delta vector magnitude.
 */
 
 pub struct DisableMouseAccel {
-    byte_patch_accel: BytePatch<5>,
-    byte_patch_clamp: BytePatch<2>,
+    patch_accel: BytePatch<5>,
+    patch_clamp: BytePatch<2>,
+    patch_clamp_driving: BytePatch<1>,
 }
 
 impl Patch for DisableMouseAccel {
@@ -32,31 +33,37 @@ impl Patch for DisableMouseAccel {
     where
         Self: Sized,
     {
-        let target_address_accel = offsets::CALL_MOUSE_ACCELERATION.get()?;
-        let target_address_clamp = offsets::CLAMP_INPUT_CONDITION.get()?;
+        let target_addr_accel = offsets::CALL_MOUSE_ACCELERATION.get()?;
+        let target_addr_clamp = offsets::CLAMP_INPUT_CONDITION.get()?;
+        let target_addr_clamp_driving = offsets::APPLY_DRIVING_DEADZONE_COND.get()?;
 
-        let patch_bytes_accel: [u8; _] = [0x90; 5]; // nop
+        let bytes_accel: [u8; _] = [0x90; 5]; // nop
 
-        let patch_bytes_clamp: [u8; _] = [
+        let bytes_clamp: [u8; _] = [
             0x90, // nop
             0xE9, // jmp
         ];
 
+        let bytes_clamp_driving: [u8; _] = [0xEB]; // jmp
+
         Ok(Box::new(Self {
-            byte_patch_accel: BytePatch::new(target_address_accel, patch_bytes_accel),
-            byte_patch_clamp: BytePatch::new(target_address_clamp, patch_bytes_clamp),
+            patch_accel: BytePatch::new(target_addr_accel, bytes_accel),
+            patch_clamp: BytePatch::new(target_addr_clamp, bytes_clamp),
+            patch_clamp_driving: BytePatch::new(target_addr_clamp_driving, bytes_clamp_driving),
         }))
     }
 
     fn apply(&mut self) -> Result<()> {
-        self.byte_patch_accel.apply()?;
-        self.byte_patch_clamp.apply()?;
+        self.patch_accel.apply()?;
+        self.patch_clamp.apply()?;
+        self.patch_clamp_driving.apply()?;
         Ok(())
     }
 
     fn revert(&mut self) -> Result<()> {
-        self.byte_patch_clamp.revert()?;
-        self.byte_patch_accel.revert()?;
+        self.patch_clamp_driving.revert()?;
+        self.patch_clamp.revert()?;
+        self.patch_accel.revert()?;
         Ok(())
     }
 }

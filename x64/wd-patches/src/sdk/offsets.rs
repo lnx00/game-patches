@@ -14,3 +14,7 @@ pub static CALL_MOUSE_ACCELERATION: LazySignature =
 // Disrupt_b64.dll+154CA39: jbe loc_7FFFDE47CAD1
 pub static CLAMP_INPUT_CONDITION: LazySignature =
     LazySignature::new(&GAME_MODULE, "0F 86 ? ? ? ? F3 0F 10 83 ? ? ? ? 48 8B 43");
+
+// Disrupt_b64.dll+179BE2A: jz short loc_7FFFDE6CBE89
+pub static APPLY_DRIVING_DEADZONE_COND: LazySignature =
+    LazySignature::new(&GAME_MODULE, "74 ? 44 0F 2F 0D ? ? ? ? 0F 28 D6");

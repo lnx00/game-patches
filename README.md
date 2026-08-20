@@ -4,14 +4,15 @@ This repository contains a set of quality-of-life patches for several PC games. 
 
 ## Games
 
-- [Assassin's Creed Unity](./acu-patches/)
-- [Assassin's Creed Syndicate](./acs-patches/)
-- [Middle-earth: Shadow of Mordor](./mesom-patches/)
-- [Middle-earth: Shadow of War](./mesow-patches/)
-- [Watch Dogs](./wd-patches/)
-- [Far Cry 3](./fc3-patches/)
-- [Far Cry 3 - Blood Dragon](./fc3bd-patches/)
-- [State of Decay: YOSE](./sodyose-patches/)
+- [Assassin's Creed Unity](./x64/acu-patches/)
+- [Assassin's Creed Syndicate](./x64/acs-patches/)
+- [Middle-earth: Shadow of Mordor](./x64/mesom-patches/)
+- [Middle-earth: Shadow of War](./x64/mesow-patches/)
+- [Watch Dogs](./x64/wd-patches/)
+- [Far Cry 3](./x86/fc3-patches/)
+- [Far Cry 3 - Blood Dragon](./x86/fc3bd-patches/)
+- [State of Decay: YOSE](./x86/sodyose-patches/)
+- [Lego Star Wars: The Skywalker Saga](./x64/lswtss-patches/)
 
 ## Workspace
 

@@ -1,6 +1,6 @@
 use crate::sdk::offsets;
-use anyhow::Result;
-use framework::{BytePatch, Patch};
+use anyhow::{Context, Result, ensure};
+use framework::{BytePatch, Patch, utils};
 
 /*
     The game has a maximum limit for camera delta movement and will
@@ -9,8 +9,7 @@ use framework::{BytePatch, Patch};
 */
 
 pub struct DisableCameraSmoothing {
-    byte_patch_mounted: BytePatch<8>,
-    byte_patch_roaming: BytePatch<1>,
+    patch_mounted: BytePatch<8>,
 }
 
 impl Patch for DisableCameraSmoothing {
@@ -29,35 +28,44 @@ impl Patch for DisableCameraSmoothing {
     where
         Self: Sized,
     {
-        let target_address_mounted_1 = offsets::LOAD_DECAY_RATE_MOUNTED.get()?;
-        //let target_address_mounted_2 = target_address_mounted_1 + 0xC;
+        let addr_load_decay_rate = offsets::LOAD_DECAY_RATE_ROAMING.get()?;
+        let target_addr_mounted = offsets::LOAD_DECAY_RATE_MOUNTED.get()?;
 
-        let target_address_roaming = offsets::SMOOTHING_FALLBACK_COND_ROAMING.get()?;
+        let load_half_time_inst = unsafe { libmem::disassemble(addr_load_decay_rate) }
+            .context("failed to disassemble decay rate load")?;
 
-        let patch_bytes_mounted_1: [u8; _] = [
-            0x66, 0x0F, 0xEF, 0xC0, // pxor xmm0, xmm0
-            0x90, 0x90, 0x90, 0x90, // nop
-        ];
+        ensure!(
+            load_half_time_inst.mnemonic == "movss",
+            "expected 'movss', found: {}",
+            load_half_time_inst.mnemonic
+        );
 
-        let patch_bytes_roaming: [u8; _] = [
-            0xEB, // jmp
+        // GAME_MODULE + 0x521DCD4C
+        let decay_rate_abs = utils::resolve_relative_target(&load_half_time_inst)
+            .context("failed to extract displacement")?;
+        let new_displacement = decay_rate_abs.wrapping_sub(target_addr_mounted + 0x8) as isize;
+
+        let [b0, b1, b2, b3] = i32::try_from(new_displacement)
+            .context("distance >= 2GB")?
+            .to_le_bytes();
+
+        let bytes_mounted: [u8; 8] = [
+            0xF3, 0x0F, 0x10, 0x05, // movss xmm0, [rip + disp32]
+            b0, b1, b2, b3,
         ];
 
         Ok(Box::new(Self {
-            byte_patch_mounted: BytePatch::new(target_address_mounted_1, patch_bytes_mounted_1),
-            byte_patch_roaming: BytePatch::new(target_address_roaming, patch_bytes_roaming),
+            patch_mounted: BytePatch::new(target_addr_mounted, bytes_mounted),
         }))
     }
 
     fn apply(&mut self) -> Result<()> {
-        self.byte_patch_mounted.apply()?;
-        self.byte_patch_roaming.apply()?;
+        self.patch_mounted.apply()?;
         Ok(())
     }
 
     fn revert(&mut self) -> Result<()> {
-        self.byte_patch_roaming.revert()?;
-        self.byte_patch_mounted.revert()?;
+        self.patch_mounted.revert()?;
         Ok(())
     }
 }

@@ -72,12 +72,12 @@ impl Patch for ReduceSensitivity {
     }
 
     fn apply(&mut self) -> Result<()> {
-        self.byte_patch.apply()?;
+        //self.byte_patch.apply()?;
         Ok(())
     }
 
     fn revert(&mut self) -> Result<()> {
-        self.byte_patch.revert()?;
+        //self.byte_patch.revert()?;
         Ok(())
     }
 }

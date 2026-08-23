@@ -7,6 +7,12 @@ pub static GAME_MODULE: LazyModule = LazyModule::new("LEGOSTARWARSSKYWALKERSAGA_
 
 /* Signatures */
 
+// LEGOSTARWARSSKYWALKERSAGA_DX11.exe+149CF0D: movss xmm0, cs:CONST_FLT_0_5
+pub static LOAD_DECAY_RATE_ROAMING: LazySignature = LazySignature::new(
+    &GAME_MODULE,
+    "F3 0F 10 05 ? ? ? ? 0F 2F C7 72 ? 41 0F 28 CA",
+);
+
 // LEGOSTARWARSSKYWALKERSAGA_DX11.exe+14924CA: movss xmm0, dword ptr [rcx+0D10h]
 pub static LOAD_DECAY_RATE_MOUNTED: LazySignature =
     LazySignature::new(&GAME_MODULE, "F3 0F 10 81 ? ? ? ? 41 0F 2E C0 F3 0F 10 B1");

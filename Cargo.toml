@@ -31,6 +31,7 @@ enable-ansi-support = "0.3"
 toml = "1"
 serde = { version = "1.0", features = ["derive"] }
 libmem = "5"
+winres = "0.1"
 windows = { version = "0.62", features = [
     "Win32_Foundation",
     "Win32_Security",
@@ -47,4 +48,4 @@ windows = { version = "0.62", features = [
 ] }
 
 [profile.release]
-lto = "fat"
+lto = true

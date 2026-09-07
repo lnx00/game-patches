@@ -229,13 +229,14 @@ dependencies = [
 
 [[package]]
 name = "fc3bd-patches"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "anyhow",
  "framework",
  "libmem",
  "tracing",
  "windows",
+ "winres",
 ]
 
 [[package]]

@@ -1,6 +1,6 @@
 [package]
 name = "acs-patches"
-version = "0.2.1"
+version = "0.2.2"
 authors = ["lnx00"]
 edition = "2024"
 
@@ -13,3 +13,6 @@ anyhow.workspace = true
 tracing.workspace = true
 libmem.workspace = true
 windows.workspace = true
+
+[build-dependencies]
+build-support.workspace = true

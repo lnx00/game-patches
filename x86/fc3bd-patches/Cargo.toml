@@ -1,6 +1,6 @@
 [package]
 name = "fc3bd-patches"
-version = "0.1.1"
+version = "0.1.2"
 authors = ["lnx00"]
 edition = "2024"
 
@@ -15,4 +15,4 @@ libmem.workspace = true
 windows.workspace = true
 
 [build-dependencies]
-winres.workspace = true
+build-support.workspace = true

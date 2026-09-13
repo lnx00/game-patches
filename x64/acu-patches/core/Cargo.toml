@@ -1,6 +1,6 @@
 [package]
 name = "acu-patches-core"
-version = "0.5.2"
+version = "0.5.3"
 authors = ["lnx00"]
 edition = "2024"
 

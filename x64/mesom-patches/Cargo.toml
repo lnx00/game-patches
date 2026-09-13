@@ -1,6 +1,6 @@
 [package]
 name = "mesom-patches"
-version = "0.2.3"
+version = "0.2.4"
 authors = ["lnx00"]
 edition = "2024"
 
@@ -15,4 +15,4 @@ libmem.workspace = true
 windows.workspace = true
 
 [build-dependencies]
-winres.workspace = true
+build-support.workspace = true

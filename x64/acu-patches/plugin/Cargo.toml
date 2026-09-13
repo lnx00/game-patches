@@ -1,6 +1,6 @@
 [package]
 name = "acu-patches-plugin"
-version = "0.5.2"
+version = "0.5.3"
 authors = ["lnx00"]
 edition = "2024"
 
@@ -15,3 +15,6 @@ tracing.workspace = true
 windows.workspace = true
 assert-offset.workspace = true
 tracing-subscriber.workspace = true
+
+[build-dependencies]
+build-support.workspace = true

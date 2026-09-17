@@ -1,3 +1,4 @@
+pub mod auto_handle;
 pub mod byte_patch;
 pub mod lazy;
 pub mod platform;

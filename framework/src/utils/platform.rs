@@ -1,10 +1,13 @@
 use anyhow::{Context, Result, bail};
 use std::ffi::c_void;
-use std::ops::Range;
+use std::ops::{Deref, Range};
 use std::{
     os::windows::io::{AsRawHandle, FromRawHandle, OwnedHandle},
     sync::LazyLock,
 };
+use windows::Win32::Foundation::CloseHandle;
+use windows::Win32::Storage::FileSystem::FILE_FLAGS_AND_ATTRIBUTES;
+use windows::core::w;
 use windows::{
     Win32::{
         Foundation::HANDLE,
@@ -26,7 +29,7 @@ use windows::{
     core::{HSTRING, PCWSTR, s},
 };
 
-pub use enable_ansi_support::enable_ansi_support;
+use crate::utils::auto_handle::AutoHandle;
 
 #[allow(dead_code)]
 pub enum MsgBoxType {
@@ -225,4 +228,49 @@ pub fn unhook_prot_memory() -> Result<()> {
 
         Ok(())
     }
+}
+
+/// Enables ANSI code support on Windows.
+///
+/// https://github.com/sunshowers-code/enable-ansi-support
+pub fn enable_ansi_support() -> Result<(), std::io::Error> {
+    use windows::Win32::{
+        Foundation::INVALID_HANDLE_VALUE,
+        Storage::FileSystem::{
+            CreateFileW, FILE_GENERIC_READ, FILE_GENERIC_WRITE, FILE_SHARE_WRITE, OPEN_EXISTING,
+        },
+        System::Console::{
+            CONSOLE_MODE, ENABLE_VIRTUAL_TERMINAL_PROCESSING, GetConsoleMode, SetConsoleMode,
+        },
+    };
+
+    unsafe {
+        let raw_handle = CreateFileW(
+            w!("CONOUT$"),
+            FILE_GENERIC_READ.0 | FILE_GENERIC_WRITE.0,
+            FILE_SHARE_WRITE,
+            None,
+            OPEN_EXISTING,
+            FILE_FLAGS_AND_ATTRIBUTES(0),
+            None,
+        )
+        .map_err(|e| std::io::Error::from_raw_os_error(e.code().0))?;
+
+        let console_handle = AutoHandle(raw_handle);
+
+        let mut console_mode = CONSOLE_MODE::default();
+        GetConsoleMode(*console_handle, &mut console_mode)
+            .map_err(|e| std::io::Error::from_raw_os_error(e.code().0))?;
+
+        // Check if VT processing is not already enabled
+        if (console_mode & ENABLE_VIRTUAL_TERMINAL_PROCESSING).0 == 0 {
+            SetConsoleMode(
+                *console_handle,
+                console_mode | ENABLE_VIRTUAL_TERMINAL_PROCESSING,
+            )
+            .map_err(|e| std::io::Error::from_raw_os_error(e.code().0))?;
+        }
+    }
+
+    Ok(())
 }

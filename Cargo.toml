@@ -27,7 +27,6 @@ build-support = { path = "build-support" }
 assert-offset = "0.1.2"
 anyhow = "1.0"
 log = "0.4"
-enable-ansi-support = "0.3"
 toml = "1"
 serde = { version = "1.0", features = ["derive"] }
 libmem = { path = "X:/repos/libmem/bindings/rust/libmem", default-features = false, features = ["static"] }
@@ -38,6 +37,7 @@ windows = { version = "0.62", features = [
     "Win32_System_Threading",
     "Win32_System_SystemServices",
     "Win32_System_Console",
+    "Win32_Storage_FileSystem",
     "Win32_UI_WindowsAndMessaging",
     "Win32_UI_Input_KeyboardAndMouse",
     "Win32_System_LibraryLoader",

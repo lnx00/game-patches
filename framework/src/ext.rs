@@ -12,7 +12,7 @@ where
         match self {
             Ok(val) => Some(val),
             Err(e) => {
-                tracing::warn!("Suppressed error: {}: {:#}", msg, e);
+                log::warn!("Suppressed error: {}: {:#}", msg, e);
                 None
             }
         }

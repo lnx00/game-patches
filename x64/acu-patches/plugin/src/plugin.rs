@@ -1,11 +1,10 @@
 use std::{
     ffi::{CString, c_char},
-    io,
     sync::OnceLock,
 };
 
 use assert_offset::AssertOffsets;
-use tracing_subscriber::fmt::writer::MakeWriter;
+use log::{LevelFilter, Log, Metadata, Record};
 use windows::Win32::Foundation::HMODULE;
 
 pub struct ImGuiShared;
@@ -19,6 +18,7 @@ pub const fn make_version(major: u64, minor: u64, minorer: u64, minorest: u64) -
 pub const PLUGIN_API_VERSION: u64 = make_version(0, 9, 1, 0);
 
 static IMGUI_CONSOLE: OnceLock<&'static ImGuiConsoleInterface> = OnceLock::new();
+static LOGGER: ImGuiLogger = ImGuiLogger;
 
 #[derive(AssertOffsets)]
 #[repr(C)]
@@ -39,37 +39,24 @@ impl ImGuiConsoleInterface {
     }
 }
 
-struct ImGuiMakeWriter;
+struct ImGuiLogger;
 
-impl<'a> MakeWriter<'a> for ImGuiMakeWriter {
-    type Writer = ImGuiWriter;
-
-    fn make_writer(&self) -> Self::Writer {
-        ImGuiWriter {
-            console: IMGUI_CONSOLE.get().expect("ImGui console not initialized"),
-        }
+impl Log for ImGuiLogger {
+    fn enabled(&self, _metadata: &Metadata) -> bool {
+        true
     }
-}
 
-struct ImGuiWriter {
-    console: &'static ImGuiConsoleInterface,
-}
-
-impl io::Write for ImGuiWriter {
-    fn write(&mut self, buf: &[u8]) -> io::Result<usize> {
-        if let Ok(s) = std::str::from_utf8(buf) {
-            let trimmed = s.trim();
-            if !trimmed.is_empty() {
-                println!("{trimmed}");
-                self.console.add_log(trimmed);
+    fn log(&self, record: &Record) {
+        if self.enabled(record.metadata()) {
+            let msg = format!("[{}] {}", record.level(), record.args());
+            println!("{msg}");
+            if let Some(console) = IMGUI_CONSOLE.get() {
+                console.add_log(&msg);
             }
         }
-        Ok(buf.len())
     }
 
-    fn flush(&mut self) -> io::Result<()> {
-        Ok(())
-    }
+    fn flush(&self) {}
 }
 
 #[derive(AssertOffsets)]
@@ -111,12 +98,9 @@ impl ACUPluginLoaderInterface {
             let _ = IMGUI_CONSOLE.set(console);
         }
 
-        let subscriber = tracing_subscriber::fmt()
-            .with_ansi(false)
-            .with_writer(ImGuiMakeWriter)
-            .finish();
-
-        let _ = tracing::subscriber::set_global_default(subscriber);
+        if log::set_logger(&LOGGER).is_ok() {
+            log::set_max_level(LevelFilter::Trace);
+        }
     }
 }
 

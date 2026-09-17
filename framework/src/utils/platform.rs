@@ -202,7 +202,7 @@ pub fn unhook_prot_memory() -> Result<()> {
             .add(4)
             .read()
             .wrapping_sub(1);
-        tracing::debug!("NtProtectVirtualMemory syscall id: {:#x}", syscall_id);
+        log::debug!("NtProtectVirtualMemory syscall id: {:#x}", syscall_id);
 
         // ntdll syscall stub layout:
         //   0: 4C 8B D1        mov r10, rcx

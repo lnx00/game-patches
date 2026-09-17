@@ -26,13 +26,11 @@ default-members = ["framework"]
 build-support = { path = "build-support" }
 assert-offset = "0.1.2"
 anyhow = "1.0"
-tracing = "0.1"
-tracing-subscriber = { version = "0.3", features = ["env-filter", "fmt"] }
-tracing-appender = "0.2"
+log = "0.4"
 enable-ansi-support = "0.3"
 toml = "1"
 serde = { version = "1.0", features = ["derive"] }
-libmem = "5"
+libmem = { path = "X:/repos/libmem/bindings/rust/libmem", default-features = false, features = ["static"] }
 winresource = "0.1"
 windows = { version = "0.62", features = [
     "Win32_Foundation",
@@ -49,5 +47,10 @@ windows = { version = "0.62", features = [
     "Wdk_System_Threading",
 ] }
 
+#[patch.crates-io]
+#libmem = { git = "https://github.com/lnx00/libmem.git", branch = "master" }
+#libmem-sys = { git = "https://github.com/lnx00/libmem.git", branch = "master" }
+
 [profile.release]
 lto = true
+strip = true

@@ -11,7 +11,7 @@ crate-type = ["cdylib"]
 acu-patches-core = { path = "../core" }
 framework = { path = "../../../framework" }
 anyhow.workspace = true
-tracing.workspace = true
+log.workspace = true
 windows.workspace = true
 
 [build-dependencies]

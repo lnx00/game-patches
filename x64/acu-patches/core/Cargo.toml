@@ -7,6 +7,6 @@ edition = "2024"
 [dependencies]
 framework = { path = "../../../framework" }
 anyhow.workspace = true
-tracing.workspace = true
+log.workspace = true
 libmem.workspace = true
 windows.workspace = true

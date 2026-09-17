@@ -12,24 +12,24 @@ const MY_PLUGIN_VERSION: u64 = make_version(0, 5, 2, 0);
 fn run() -> Result<()> {
     let mut patch_manager = PatchManager::new();
 
-    tracing::info!("Initializing patches...");
+    log::info!("Initializing patches...");
     patches::register_all(&mut patch_manager);
 
-    tracing::info!("Applying patches...");
+    log::info!("Applying patches...");
     patch_manager.apply_all(&CONFIG);
 
-    tracing::info!("Patches ready!");
+    log::info!("Patches ready!");
 
     Ok(())
 }
 
 extern "C" fn init_patches(_plugin_loader: &ACUPluginLoaderInterface) -> bool {
     // Unhook NtProtectVirtualMemory
-    tracing::info!("Unhooking NtProtectVirtualMemory...");
+    log::info!("Unhooking NtProtectVirtualMemory...");
     platform::unhook_prot_memory().warn_and_continue("failed to unhook NtProtectVirtualMemory");
 
     if let Err(e) = run() {
-        tracing::error!("Fatal error: {:#}", e);
+        log::error!("Fatal error: {:#}", e);
     }
 
     true
@@ -42,7 +42,7 @@ pub unsafe extern "C" fn ACUPluginStart(
 ) -> bool {
     let _ = plugin_loader.init_logger();
 
-    tracing::info!(
+    log::info!(
         "Hello ACUFixes plugin loader version {}",
         plugin_loader.m_plugin_loader_version
     );

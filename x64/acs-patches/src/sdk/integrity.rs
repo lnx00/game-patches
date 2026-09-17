@@ -51,7 +51,7 @@ static INTEGRITY_THREAD_FOUND: AtomicBool = AtomicBool::new(false);
 /// Analyzes the thread start code and checks if it is the integrity thread
 fn analyze_thread_start(start_address: usize) -> Option<bool> {
     unsafe {
-        tracing::debug!("Analyzing thread {:X}...", start_address);
+        log::debug!("Analyzing thread {:X}...", start_address);
 
         // Try to get cached verdict with read lock
         if let Some(verdict) = INTEGRITY_THREAD_VERDICTS
@@ -60,7 +60,7 @@ fn analyze_thread_start(start_address: usize) -> Option<bool> {
             .get(&start_address)
             .copied()
         {
-            tracing::debug!("Cached verdict for thread {:X}: {}", start_address, verdict);
+            log::debug!("Cached verdict for thread {:X}: {}", start_address, verdict);
             return Some(verdict);
         }
 
@@ -69,7 +69,7 @@ fn analyze_thread_start(start_address: usize) -> Option<bool> {
 
             let mnemonic = inst.mnemonic.to_lowercase();
             if mnemonic != "jmp" && mnemonic != "call" {
-                tracing::debug!("First inst was not a jump or call");
+                log::debug!("First inst was not a jump or call");
                 INTEGRITY_THREAD_VERDICTS
                     .write()
                     .unwrap()
@@ -78,7 +78,7 @@ fn analyze_thread_start(start_address: usize) -> Option<bool> {
             }
 
             let target_addr = utils::resolve_relative_target(&inst)?;
-            tracing::debug!("Target addr of {}: {}", mnemonic, target_addr);
+            log::debug!("Target addr of {}: {}", mnemonic, target_addr);
 
             let in_range = section_range.contains(&target_addr);
 
@@ -87,7 +87,7 @@ fn analyze_thread_start(start_address: usize) -> Option<bool> {
                 .unwrap()
                 .insert(start_address, in_range);
 
-            tracing::debug!("Verdict for thread {:X}: {}", start_address, in_range);
+            log::debug!("Verdict for thread {:X}: {}", start_address, in_range);
 
             return Some(in_range);
         }
@@ -120,7 +120,7 @@ fn check_thread(thread_id: u32) -> Result<bool> {
         let is_integrity_thread = analyze_thread_start(thread_start_address) == Some(true);
         if is_integrity_thread {
             let _ = TerminateThread(thread_handle, 0x0);
-            tracing::debug!("Terminated integrity check thread: {:X}", thread_id);
+            log::debug!("Terminated integrity check thread: {:X}", thread_id);
         }
 
         let _ = CloseHandle(thread_handle);
@@ -143,12 +143,12 @@ pub fn terminate_integrity_checks() -> Result<bool> {
             let check_result = check_thread(thread.tid);
             match check_result {
                 Ok(true) => {
-                    tracing::info!("Terminated integrity check thread: {:X}", thread.tid);
+                    log::info!("Terminated integrity check thread: {:X}", thread.tid);
                     terminated_any = true;
                 }
 
                 Err(e) => {
-                    tracing::warn!("Cannot check thread {:X}: {:#}", thread.tid, e);
+                    log::warn!("Cannot check thread {:X}: {:#}", thread.tid, e);
                 }
 
                 _ => {}
@@ -163,17 +163,17 @@ pub fn initialize() -> Result<()> {
     INTEGRITY_THREAD_FOUND.store(false, Ordering::SeqCst);
 
     // Install hook
-    tracing::info!("Installing CreateThread hook...");
+    log::info!("Installing CreateThread hook...");
     IntegrityHook::inst().apply()?;
 
     // Terminate running threads
-    tracing::info!("Terminating existing integrity checks...");
+    log::info!("Terminating existing integrity checks...");
     if terminate_integrity_checks()? {
         return Ok(());
     }
 
     // Wait until the thread was killed...
-    tracing::info!("Waiting for new integrity check thread...");
+    log::info!("Waiting for new integrity check thread...");
     utils::wait_until_true(Duration::from_secs(30), Duration::from_millis(10), || {
         INTEGRITY_THREAD_FOUND.load(Ordering::SeqCst)
     })
@@ -252,7 +252,7 @@ impl IntegrityHook {
         if analyze_thread_start(lp_start_address as usize) == Some(true) {
             INTEGRITY_THREAD_FOUND.store(true, Ordering::SeqCst);
             lp_start_address = Self::empty_thread as *mut c_void;
-            tracing::info!("CreateThread: prevented integrity check thread creation");
+            log::info!("CreateThread: prevented integrity check thread creation");
         }
 
         unsafe {

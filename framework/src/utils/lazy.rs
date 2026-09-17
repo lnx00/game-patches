@@ -19,7 +19,7 @@ impl LazyModule {
             .get()
             .or_else(|| {
                 let module = libmem::find_module(self.name)?;
-                tracing::debug!("Found module: {}", module);
+                log::debug!("Found module: {}", module);
 
                 let _ = self.module.set(module);
                 self.module.get()
@@ -85,7 +85,7 @@ impl LazySignature {
 
     fn scan(module: &libmem::Module, signature: &str) -> Result<usize> {
         if let Some(result) = unsafe { libmem::sig_scan(signature, module.base, module.size) } {
-            tracing::debug!(
+            log::debug!(
                 "Found signature: '{}' in '{}' at '{:X}'",
                 signature,
                 module.name,

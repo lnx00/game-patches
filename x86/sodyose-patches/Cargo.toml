@@ -1,6 +1,6 @@
 [package]
 name = "sodyose-patches"
-version = "0.2.1"
+version = "0.2.2"
 authors = ["lnx00"]
 edition = "2024"
 
@@ -10,7 +10,7 @@ crate-type = ["cdylib"]
 [dependencies]
 framework = { path = "../../framework" }
 anyhow.workspace = true
-tracing.workspace = true
+log.workspace = true
 libmem.workspace = true
 windows.workspace = true
 

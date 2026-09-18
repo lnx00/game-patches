@@ -83,18 +83,7 @@ impl log::Log for Logger {
 }
 
 /// Initializes the logger. Silently fails, if it was already initialized.
-pub fn init_logger(max_level_name: &str) {
-    // TODO: Move this to the config system or extension
-    let max_level = match max_level_name {
-        "off" => LevelFilter::Off,
-        "trace" => LevelFilter::Trace,
-        "debug" => LevelFilter::Debug,
-        "info" => LevelFilter::Info,
-        "warn" => LevelFilter::Warn,
-        "error" => LevelFilter::Error,
-        _ => LevelFilter::Info,
-    };
-
+pub fn init_logger(max_level: log::LevelFilter) {
     let config = Logger {
         max_level,
         ansi_support: true,

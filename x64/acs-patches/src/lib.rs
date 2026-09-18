@@ -63,7 +63,7 @@ fn run() -> Result<()> {
 
 fn main_thread() {
     // Initialize logger
-    framework::init_logger(&CONFIG.log_level);
+    framework::init_logger(CONFIG.log_level);
 
     // Attach console window
     if CONFIG.show_console {

@@ -2,18 +2,24 @@ use std::{collections::HashMap, fs};
 
 use serde::Deserialize;
 
-#[derive(Default, Deserialize)]
+#[derive(Deserialize)]
 #[serde(default)]
 pub struct Config {
     pub show_console: bool,
     pub allow_unloading: bool,
-    #[serde(default = "default_log_level")]
-    pub log_level: String,
+    pub log_level: log::LevelFilter,
     pub patches: HashMap<String, bool>,
 }
 
-fn default_log_level() -> String {
-    "info".to_string()
+impl Default for Config {
+    fn default() -> Self {
+        Self {
+            show_console: false,
+            allow_unloading: false,
+            log_level: log::LevelFilter::Info,
+            patches: HashMap::new(),
+        }
+    }
 }
 
 impl Config {

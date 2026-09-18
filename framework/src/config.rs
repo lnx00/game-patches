@@ -25,7 +25,7 @@ impl Default for Config {
 impl Config {
     pub fn read(path: impl AsRef<std::path::Path>) -> Option<Config> {
         let contents = fs::read_to_string(path).ok()?;
-        let config = toml::from_str(&contents).ok()?;
+        let config = basic_toml::from_str(&contents).ok()?;
 
         Some(config)
     }

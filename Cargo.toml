@@ -27,7 +27,7 @@ build-support = { path = "build-support" }
 assert-offset = "0.1.2"
 anyhow = "1.0"
 log = { version = "0.4", features = ["serde"] }
-toml = "1"
+basic-toml = "0.1"
 serde = { version = "1.0", features = ["derive"] }
 libmem = { path = "X:/repos/libmem/bindings/rust/libmem", default-features = false, features = ["static"] }
 winresource = { version = "0.1", default-features = false }
@@ -53,4 +53,4 @@ windows = { version = "0.62", features = [
 
 [profile.release]
 lto = true
-strip = true
+panic = "abort"

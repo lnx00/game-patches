@@ -3,3 +3,4 @@ allow_unloading = false # Allow unloading of patches at runtime
 
 [patches]
 disable_mouse_accel = true
+disable_aim_assist = true

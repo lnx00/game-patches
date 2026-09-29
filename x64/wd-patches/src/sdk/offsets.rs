@@ -18,3 +18,8 @@ pub static CLAMP_INPUT_CONDITION: LazySignature =
 // Disrupt_b64.dll+179BE2A: jz short loc_7FFFDE6CBE89
 pub static APPLY_DRIVING_DEADZONE_COND: LazySignature =
     LazySignature::new(&GAME_MODULE, "74 ? 44 0F 2F 0D ? ? ? ? 0F 28 D6");
+
+// CCameraGameProcessingComponent::PrepareAimingAssistanceTests
+// Disrupt_b64.dll+0x16a82f0: push rbp
+pub static PREPARE_AIM_ASSIST_TARGETS: LazySignature =
+    LazySignature::new(&GAME_MODULE, "40 55 53 56 48 8D AC 24 ? ? ? ? 48 81 EC ? ? ? ? 48 8B F1 48 8B 0D");

@@ -5,6 +5,7 @@ Quality-of-life patches for the game "Watch Dogs".
 ## Features
 
 - **Disable mouse acceleration:** Disables the mouse acceleration and maximum camera turn speed.
+- **Disable aim assist:** Disables the magnetic aim towards enemies.
 
 ## Installation
 
@@ -29,3 +30,4 @@ An example configuration file can be found [here](./config/wd_patches.toml).
 
 - [libmem by rdbo](https://github.com/rdbo/libmem)
 - [Ultimate-ASI-Loader by ThirteenAG](https://github.com/ThirteenAG/Ultimate-ASI-Loader)
+- [wd-rawinput by HRVAT007](https://github.com/HRVAT007/wd-rawinput) for the aim assist fix

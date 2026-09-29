@@ -42,12 +42,12 @@ fn run() -> Result<()> {
 
     // Wait for unload, if enabled
     if CONFIG.allow_unloading {
-        log::info!("Patches ready! press F11 to unload.");
+        log::info!("Patches ready! Press F11 to unload.");
         while !platform::is_button_down(VK_F11) {
             thread::sleep(std::time::Duration::from_millis(100));
         }
 
-        log::info!("F11 pressed! cleaning up...");
+        log::info!("F11 pressed! Cleaning up...");
         cleanup();
     } else {
         log::info!("Patches ready!");

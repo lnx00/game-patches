@@ -6,6 +6,7 @@ Quality-of-life patches for the game "Far Cry 3 - Blood Dragon".
 
 - **Disable input clamp:** Removes the maximum mouse input limit (also referred to as "Negative Mouse Acceleration").
 - **Sensitivity fix:** Reduces the sensitivity scale to make the game playable with modern high-DPI mice.
+- **CPU affinity fix:** Improves the performance on modern systems with many CPU cores.
 
 ## Installation
 

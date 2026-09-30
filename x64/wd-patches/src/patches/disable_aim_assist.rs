@@ -3,9 +3,8 @@ use anyhow::Result;
 use framework::{BytePatch, Patch};
 
 /*
-    The game prepares a list of potential aim assist candidates
-    every tick. We can disable aim assist by skipping the
-    creations of this list.
+    The game prepares a list of potential aim assist candidates every tick.
+    We can disable aim assist by skipping the creation of this list.
 
     Credits: https://github.com/HRVAT007/wd-rawinput
 */

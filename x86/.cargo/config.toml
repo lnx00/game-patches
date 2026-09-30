@@ -1,5 +1,2 @@
 [build]
 target = "i686-pc-windows-msvc"
-
-[env]
-LIBMEM_DIR = "X:/repos/libmem/build/x86"
